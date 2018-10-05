@@ -16,7 +16,7 @@ func Provider() terraform.ResourceProvider {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"username": &schema.Schema{
+			"organization": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 			},
@@ -31,7 +31,7 @@ func Provider() terraform.ResourceProvider {
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	token := d.Get("api_token").(string)
 	vcsType := d.Get("vcs_type").(string)
-	username := d.Get("username").(string)
+	organization := d.Get("organization").(string)
 
-	return NewClient(token, vcsType, username)
+	return NewClient(token, vcsType, organization)
 }

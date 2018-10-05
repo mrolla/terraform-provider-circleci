@@ -20,24 +20,24 @@ type EnvironmentVariable struct {
 
 // Client for the CircleCI API
 type Client struct {
-	token           string
-	projectUsername string
-	vcsType         string
-	httpClient      *http.Client
+	token        string
+	vcsType      string
+	organization string
+	httpClient   *http.Client
 }
 
 // NewClient creates a new CircleCI API client
-func NewClient(token, vcsType, projectUsername string) (*Client, error) {
+func NewClient(token, vcsType, organization string) (*Client, error) {
 	return &Client{
-		token:           token,
-		vcsType:         vcsType,
-		projectUsername: projectUsername,
-		httpClient:      http.DefaultClient,
+		token:        token,
+		vcsType:      vcsType,
+		organization: organization,
+		httpClient:   http.DefaultClient,
 	}, nil
 }
 
 func (c *Client) buildApiURL(projectName string, endpoint string) string {
-	return fmt.Sprintf("%s/project/%s/%s/%s/%s", baseEndpoint, c.vcsType, c.projectUsername, projectName, endpoint)
+	return fmt.Sprintf("%s/project/%s/%s/%s/%s", baseEndpoint, c.vcsType, c.organization, projectName, endpoint)
 }
 
 func (c *Client) CreateEnvironmentVariable(projectName, envName, envValue string) error {
