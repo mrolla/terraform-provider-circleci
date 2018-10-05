@@ -14,7 +14,8 @@ func Provider() terraform.ResourceProvider {
 			},
 			"vcs_type": &schema.Schema{
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
+				Default:  "github",
 			},
 			"organization": &schema.Schema{
 				Type:     schema.TypeString,
