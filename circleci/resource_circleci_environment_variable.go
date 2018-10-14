@@ -1,6 +1,7 @@
 package circleci
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/hashicorp/terraform/helper/schema"
@@ -70,8 +71,16 @@ func resourceCircleCIEnvironmentVariableCreate(d *schema.ResourceData, m interfa
 	envName := d.Get("name").(string)
 	envValue := d.Get("value").(string)
 
-	err := client.CreateEnvironmentVariable(projectName, envName, envValue)
+	alreadyExists, err := client.EnvironmentVariableExists(projectName, envName)
 	if err != nil {
+		return err
+	}
+
+	if alreadyExists {
+		return fmt.Errorf("Environment variable '%s' already exists for project '%s'.", envName, projectName)
+	}
+
+	if err := client.CreateEnvironmentVariable(projectName, envName, envValue); err != nil {
 		return err
 	}
 
