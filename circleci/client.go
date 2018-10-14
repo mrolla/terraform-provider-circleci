@@ -97,6 +97,9 @@ func (c *Client) EnvironmentVariableExists(projectName, envName string) (bool, e
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		if resp.StatusCode == http.StatusNotFound {
+			return false, nil
+		}
 		return false, fmt.Errorf("client: get wrong status code %d", resp.StatusCode)
 	}
 
