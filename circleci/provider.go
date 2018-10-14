@@ -9,17 +9,22 @@ func Provider() terraform.ResourceProvider {
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"api_token": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				DefaultFunc: schema.EnvDefaultFunc("CIRCLECI_TOKEN", nil),
+				Description: "The token key for API operations.",
 			},
 			"vcs_type": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				Default:  "github",
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("CIRCLECI_VCS_TYPE", "github"),
+				Description: "The VCS type for the organization.",
 			},
 			"organization": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				DefaultFunc: schema.EnvDefaultFunc("CIRCLECI_ORGANIZATION", nil),
+				Description: "The CircleCI organization.",
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
