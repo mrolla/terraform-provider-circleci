@@ -18,3 +18,11 @@ After placing it into your plugins directory,  run `terraform init` to initializ
 [install plugin]: https://www.terraform.io/docs/plugins/basics.html#installing-a-plugin
 [terraform]: https://www.terraform.io/downloads.html
 [go]: https://golang.org/doc/install
+
+
+## Contribute
+
+To build the project you can use `make all` which:
+1. run the tests `make test`
+2. build the binary `make build`
+3. copy the binary to the terraform plugin directory `make install_plugin_locally`
