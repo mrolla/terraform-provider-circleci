@@ -1,6 +1,8 @@
 package circleci
 
 import (
+	"crypto/sha256"
+	"encoding/base64"
 	"fmt"
 	"time"
 
@@ -24,23 +26,39 @@ func resourceCircleCIEnvironmentVariable() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"project": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Description: "The name of the CircleCI project to create the variable in",
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
 			},
 			"name": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Description: "The name of the environment variable",
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
 			},
 			"value": &schema.Schema{
-				Type:      schema.TypeString,
-				Required:  true,
-				ForceNew:  true,
-				Sensitive: true,
+				Description: "The value of the environment variable",
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Sensitive:   true,
+				StateFunc: func(value interface{}) string {
+					/* To avoid storing the value of the environment variable in the state
+					but still be able to know when the value change, we store a hash of the value.
+					*/
+					return hashString(value.(string))
+				},
 			},
 		},
 	}
+}
+
+// hashString do a sha256 checksum, encode it in base64 and return it as string
+// The choice of sha256 for checksum is arbitrary.
+func hashString(str string) string {
+	hash := sha256.Sum256([]byte(str))
+	return base64.StdEncoding.EncodeToString(hash[:])
 }
 
 func resourceCircleCIEnvironmentVariableCreate(d *schema.ResourceData, m interface{}) error {
@@ -83,10 +101,8 @@ func resourceCircleCIEnvironmentVariableRead(d *schema.ResourceData, m interface
 		return err
 	}
 
-	if err := d.Set("value", envVar.Value); err != nil {
-		return err
-	}
-
+	// environment variable value can only be set at creation since CircleCI API return hidden values : https://circleci.com/docs/api/#list-environment-variables
+	// also it is better to avoid storing sensitive value in terraform state if possible.
 	return nil
 }
 
