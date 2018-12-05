@@ -38,6 +38,5 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	token := d.Get("api_token").(string)
 	vcsType := d.Get("vcs_type").(string)
 	organization := d.Get("organization").(string)
-
-	return NewClient(token, vcsType, organization)
+	return NewConfig(token, vcsType, organization), nil
 }

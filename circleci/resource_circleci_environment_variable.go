@@ -34,53 +34,32 @@ func resourceCircleCIEnvironmentVariable() *schema.Resource {
 				ForceNew: true,
 			},
 			"value": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-				DiffSuppressFunc: func(k, oldValue, newValue string, d *schema.ResourceData) bool {
-					// TODO(matteo): this is very naive, maybe storing the real value in
-					// the state is a better approach
-					return oldValue == censorValue(newValue)
-				},
+				Type:      schema.TypeString,
+				Required:  true,
+				ForceNew:  true,
+				Sensitive: true,
 			},
 		},
 	}
 }
 
-func censorValue(value string) string {
-	length := len(value)
-	switch {
-	case length <= 1:
-		return "xxxx"
-	case length == 2 || length == 3:
-		return "xxxx" + value[length-1:]
-	case length == 4 || length == 5:
-		return "xxxx" + value[length-2:]
-	case length == 6 || length == 7:
-		return "xxxx" + value[length-3:]
-	default:
-		return "xxxx" + value[length-4:]
-	}
-	return value
-}
-
 func resourceCircleCIEnvironmentVariableCreate(d *schema.ResourceData, m interface{}) error {
-	client := m.(*Client)
+	providerClient := m.(*ProviderClient)
 
 	projectName := d.Get("project").(string)
 	envName := d.Get("name").(string)
 	envValue := d.Get("value").(string)
 
-	alreadyExists, err := client.EnvironmentVariableExists(projectName, envName)
+	exists, err := providerClient.EnvVarExists(projectName, envName)
 	if err != nil {
 		return err
 	}
 
-	if alreadyExists {
-		return fmt.Errorf("Environment variable '%s' already exists for project '%s'.", envName, projectName)
+	if exists {
+		return fmt.Errorf("environment variable '%s' already exists for project '%s'", envName, projectName)
 	}
 
-	if err := client.CreateEnvironmentVariable(projectName, envName, envValue); err != nil {
+	if _, err := providerClient.AddEnvVar(projectName, envName, envValue); err != nil {
 		return err
 	}
 
@@ -90,12 +69,12 @@ func resourceCircleCIEnvironmentVariableCreate(d *schema.ResourceData, m interfa
 }
 
 func resourceCircleCIEnvironmentVariableRead(d *schema.ResourceData, m interface{}) error {
-	client := m.(*Client)
+	providerClient := m.(*ProviderClient)
 
 	projectName := d.Get("project").(string)
 	envName := d.Get("name").(string)
 
-	envVar, err := client.GetEnvironmentVariable(projectName, envName)
+	envVar, err := providerClient.GetEnvVar(projectName, envName)
 	if err != nil {
 		return err
 	}
@@ -112,12 +91,12 @@ func resourceCircleCIEnvironmentVariableRead(d *schema.ResourceData, m interface
 }
 
 func resourceCircleCIEnvironmentVariableDelete(d *schema.ResourceData, m interface{}) error {
-	client := m.(*Client)
+	providerClient := m.(*ProviderClient)
 
 	projectName := d.Get("project").(string)
 	envName := d.Get("name").(string)
 
-	err := client.DeleteEnvironmentVariable(projectName, envName)
+	err := providerClient.DeleteEnvVar(projectName, envName)
 	if err != nil {
 		return err
 	}
@@ -128,10 +107,15 @@ func resourceCircleCIEnvironmentVariableDelete(d *schema.ResourceData, m interfa
 }
 
 func resourceCircleCIEnvironmentVariableExists(d *schema.ResourceData, m interface{}) (bool, error) {
-	client := m.(*Client)
+	providerClient := m.(*ProviderClient)
 
 	projectName := d.Get("project").(string)
 	envName := d.Get("name").(string)
 
-	return client.EnvironmentVariableExists(projectName, envName)
+	envVar, err := providerClient.GetEnvVar(projectName, envName)
+	if err != nil {
+		return false, err
+	}
+
+	return bool(envVar.Value != ""), nil
 }

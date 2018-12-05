@@ -35,11 +35,3 @@ func testPreCheck(t *testing.T) {
 		t.Fatal("CIRCLECI_PROJECT must be set for acceptance tests")
 	}
 }
-
-func testGetClient() (*Client, error) {
-	token := os.Getenv("CIRCLECI_TOKEN")
-	vcsType := os.Getenv("CIRCLECI_VCS_TYPE")
-	organization := os.Getenv("CIRCLECI_ORGANIZATION")
-
-	return NewClient(token, vcsType, organization)
-}
