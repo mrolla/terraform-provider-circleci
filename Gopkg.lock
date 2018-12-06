@@ -265,7 +265,7 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:219c0ae340cc1e341c851b14435210742e2de52860be64393ab9e3f3522b8b6a"
+  digest = "1:4a1f7d2813578be646292d73477b21dc48ca9301bfb0fc7c254fe37dde353077"
   name = "github.com/hashicorp/terraform"
   packages = [
     "config",
@@ -296,8 +296,8 @@
     "version",
   ]
   pruneopts = "UT"
-  revision = "6dfc4d748de9cda23835bc5704307ed45e839622"
-  version = "v0.11.8"
+  revision = "17850e9a55d33c43d7c31fd6ac122ba97a51d899"
+  version = "v0.11.10"
 
 [[projects]]
   branch = "master"
