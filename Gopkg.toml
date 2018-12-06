@@ -32,3 +32,11 @@
 [prune]
   go-tests = true
   unused-packages = true
+
+[[constraint]]
+  branch = "dev/tg/getenvvar"
+  name = "github.com/jszwedko/go-circleci"
+  source = "github.com/tgermain/go-circleci"
+# waiting for https://github.com/jszwedko/go-circleci/pull/14 to be merged to be able to use 1.1 API
+# waiting for https://github.com/tylux/go-circleci/pull/1 to be merged to fix the tests
+# waiting for https://github.com/tylux/go-circleci/pull/2 to be merged to add GetEnvVar

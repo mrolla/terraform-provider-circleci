@@ -1,6 +1,8 @@
 package circleci
 
 import (
+	"crypto/sha256"
+	"encoding/base64"
 	"fmt"
 	"time"
 
@@ -24,63 +26,58 @@ func resourceCircleCIEnvironmentVariable() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"project": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Description: "The name of the CircleCI project to create the variable in",
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
 			},
 			"name": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Description: "The name of the environment variable",
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
 			},
 			"value": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-				DiffSuppressFunc: func(k, oldValue, newValue string, d *schema.ResourceData) bool {
-					// TODO(matteo): this is very naive, maybe storing the real value in
-					// the state is a better approach
-					return oldValue == censorValue(newValue)
+				Description: "The value of the environment variable",
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Sensitive:   true,
+				StateFunc: func(value interface{}) string {
+					/* To avoid storing the value of the environment variable in the state
+					but still be able to know when the value change, we store a hash of the value.
+					*/
+					return hashString(value.(string))
 				},
 			},
 		},
 	}
 }
 
-func censorValue(value string) string {
-	length := len(value)
-	switch {
-	case length <= 1:
-		return "xxxx"
-	case length == 2 || length == 3:
-		return "xxxx" + value[length-1:]
-	case length == 4 || length == 5:
-		return "xxxx" + value[length-2:]
-	case length == 6 || length == 7:
-		return "xxxx" + value[length-3:]
-	default:
-		return "xxxx" + value[length-4:]
-	}
-	return value
+// hashString do a sha256 checksum, encode it in base64 and return it as string
+// The choice of sha256 for checksum is arbitrary.
+func hashString(str string) string {
+	hash := sha256.Sum256([]byte(str))
+	return base64.StdEncoding.EncodeToString(hash[:])
 }
 
 func resourceCircleCIEnvironmentVariableCreate(d *schema.ResourceData, m interface{}) error {
-	client := m.(*Client)
+	providerClient := m.(*ProviderClient)
 
 	projectName := d.Get("project").(string)
 	envName := d.Get("name").(string)
 	envValue := d.Get("value").(string)
 
-	alreadyExists, err := client.EnvironmentVariableExists(projectName, envName)
+	exists, err := providerClient.EnvVarExists(projectName, envName)
 	if err != nil {
 		return err
 	}
 
-	if alreadyExists {
-		return fmt.Errorf("Environment variable '%s' already exists for project '%s'.", envName, projectName)
+	if exists {
+		return fmt.Errorf("environment variable '%s' already exists for project '%s'", envName, projectName)
 	}
 
-	if err := client.CreateEnvironmentVariable(projectName, envName, envValue); err != nil {
+	if _, err := providerClient.AddEnvVar(projectName, envName, envValue); err != nil {
 		return err
 	}
 
@@ -90,12 +87,12 @@ func resourceCircleCIEnvironmentVariableCreate(d *schema.ResourceData, m interfa
 }
 
 func resourceCircleCIEnvironmentVariableRead(d *schema.ResourceData, m interface{}) error {
-	client := m.(*Client)
+	providerClient := m.(*ProviderClient)
 
 	projectName := d.Get("project").(string)
 	envName := d.Get("name").(string)
 
-	envVar, err := client.GetEnvironmentVariable(projectName, envName)
+	envVar, err := providerClient.GetEnvVar(projectName, envName)
 	if err != nil {
 		return err
 	}
@@ -104,20 +101,18 @@ func resourceCircleCIEnvironmentVariableRead(d *schema.ResourceData, m interface
 		return err
 	}
 
-	if err := d.Set("value", envVar.Value); err != nil {
-		return err
-	}
-
+	// environment variable value can only be set at creation since CircleCI API return hidden values : https://circleci.com/docs/api/#list-environment-variables
+	// also it is better to avoid storing sensitive value in terraform state if possible.
 	return nil
 }
 
 func resourceCircleCIEnvironmentVariableDelete(d *schema.ResourceData, m interface{}) error {
-	client := m.(*Client)
+	providerClient := m.(*ProviderClient)
 
 	projectName := d.Get("project").(string)
 	envName := d.Get("name").(string)
 
-	err := client.DeleteEnvironmentVariable(projectName, envName)
+	err := providerClient.DeleteEnvVar(projectName, envName)
 	if err != nil {
 		return err
 	}
@@ -128,10 +123,15 @@ func resourceCircleCIEnvironmentVariableDelete(d *schema.ResourceData, m interfa
 }
 
 func resourceCircleCIEnvironmentVariableExists(d *schema.ResourceData, m interface{}) (bool, error) {
-	client := m.(*Client)
+	providerClient := m.(*ProviderClient)
 
 	projectName := d.Get("project").(string)
 	envName := d.Get("name").(string)
 
-	return client.EnvironmentVariableExists(projectName, envName)
+	envVar, err := providerClient.GetEnvVar(projectName, envName)
+	if err != nil {
+		return false, err
+	}
+
+	return bool(envVar.Value != ""), nil
 }

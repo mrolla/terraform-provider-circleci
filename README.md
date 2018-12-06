@@ -1,4 +1,4 @@
-# Terraform Provider
+# CircleCI terraform provider
 
 - Website: https://www.terraform.io
 - [![Gitter chat](https://badges.gitter.im/hashicorp-terraform/Lobby.png)](https://gitter.im/hashicorp-terraform/Lobby)
@@ -18,3 +18,27 @@ After placing it into your plugins directory,  run `terraform init` to initializ
 [install plugin]: https://www.terraform.io/docs/plugins/basics.html#installing-a-plugin
 [terraform]: https://www.terraform.io/downloads.html
 [go]: https://golang.org/doc/install
+
+
+Example:
+```hcl
+provider "circleci" {
+  api_token    = "${file("circleci_token")}"
+  vcs_type     = "github"
+  organization = "my_org"
+}
+
+resource "circleci_environment_variable" "from_terraform" {
+  project = "mySuperProject"
+  name    = "from_terraform"
+  value   = "the secret"
+}
+```
+
+## Contribute
+
+To build the project you can use `make all` which:
+1. run the tests `make test`
+2. build the binary `make build`
+3. copy the binary to the terraform plugin directory (default $HOME/.terraform.d/plugins/)
+ `make install_plugin_locally`

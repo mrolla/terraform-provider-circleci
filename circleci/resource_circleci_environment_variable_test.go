@@ -12,29 +12,6 @@ import (
 	"github.com/hashicorp/terraform/terraform"
 )
 
-func TestCensorValue(t *testing.T) {
-	testCases := []struct {
-		input    string
-		expected string
-	}{
-		{"1", "xxxx"},
-		{"22", "xxxx2"},
-		{"333", "xxxx3"},
-		{"4444", "xxxx44"},
-		{"55555", "xxxx55"},
-		{"666666", "xxxx666"},
-		{"7777777", "xxxx777"},
-		{"88888888", "xxxx8888"},
-	}
-
-	for _, tt := range testCases {
-		actual := censorValue(tt.input)
-		if actual != tt.expected {
-			t.Errorf("%s but expected %s", actual, tt.expected)
-		}
-	}
-}
-
 func TestCircleCIEnvironmentVariableCreateThenUpdate(t *testing.T) {
 	project := os.Getenv("CIRCLECI_PROJECT")
 	envName := "TEST_" + acctest.RandString(8)
@@ -53,7 +30,7 @@ func TestCircleCIEnvironmentVariableCreateThenUpdate(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "project", project),
 					resource.TestCheckResourceAttr(resourceName, "name", envName),
-					resource.TestCheckResourceAttr(resourceName, "value", censorValue("value-for-the-test")),
+					resource.TestCheckResourceAttr(resourceName, "value", "value-for-the-test"),
 				),
 			},
 			resource.TestStep{
@@ -61,7 +38,7 @@ func TestCircleCIEnvironmentVariableCreateThenUpdate(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "project", project),
 					resource.TestCheckResourceAttr(resourceName, "name", envName),
-					resource.TestCheckResourceAttr(resourceName, "value", censorValue("value-for-the-test-again")),
+					resource.TestCheckResourceAttr(resourceName, "value", "value-for-the-test-again"),
 				),
 			},
 		},
@@ -87,7 +64,7 @@ func TestCircleCIEnvironmentVariableCreateAlreadyExists(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "project", project),
 					resource.TestCheckResourceAttr(resourceName, "name", envName),
-					resource.TestCheckResourceAttr(resourceName, "value", censorValue(envValue)),
+					resource.TestCheckResourceAttr(resourceName, "value", envValue),
 				),
 			},
 			resource.TestStep{
@@ -99,19 +76,19 @@ func TestCircleCIEnvironmentVariableCreateAlreadyExists(t *testing.T) {
 }
 
 func testCircleCIEnvironmentVariableCheckDestroy(s *terraform.State) error {
-	client := testProvider.Meta().(*Client)
+	providerClient := testProvider.Meta().(*ProviderClient)
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "circleci_environment_variable" {
 			continue
 		}
 
-		exists, err := client.EnvironmentVariableExists(rs.Primary.Attributes["project"], rs.Primary.Attributes["name"])
+		envVar, err := providerClient.GetEnvVar(rs.Primary.Attributes["project"], rs.Primary.Attributes["name"])
 		if err != nil {
 			return err
 		}
 
-		if exists {
+		if envVar.Name != "" {
 			return errors.New("Environment variable should have been destroyed")
 		}
 	}
