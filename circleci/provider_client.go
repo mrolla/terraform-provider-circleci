@@ -34,7 +34,7 @@ func (pv *ProviderClient) EnvVarExists(projectName, envVarName string) (bool, er
 	if err != nil {
 		return false, err
 	}
-	return bool(envVar.Name == ""), nil
+	return bool(envVar.Name != ""), nil
 }
 
 // AddEnvVar create an environment variable with given name and value
