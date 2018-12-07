@@ -15,12 +15,12 @@
 
 ## Using the provider
 
-### Download a release
+#### Download a release
 Download the latest release for your OS from the [release page][release page]
 and follow the instructions to [install third party plugins][third party plugins].
 
-### Build it from source
-To build the project you can use `make all` which:
+#### Build from sources
+To build the project you can use `make all` which will:
 - run the tests (`make test`)
 - build the binary (`make build`)
 - copy the binary to the [Terraform plugin directory][third party plugins] (`make install_plugin_locally`)
@@ -42,14 +42,6 @@ resource "circleci_environment_variable" "from_terraform" {
   value   = "the secret"
 }
 ```
-
-## Contribute
-
-To build the project you can use `make all` which:
-1. run the tests `make test`
-2. build the binary `make build`
-3. copy the binary to the terraform plugin directory (default $HOME/.terraform.d/plugins/)
- `make install_plugin_locally`
 
 [install plugin]: https://www.terraform.io/docs/plugins/basics.html#installing-a-plugin
 [third party plugins]: https://www.terraform.io/docs/configuration/providers.html#third-party-plugins
