@@ -1,4 +1,6 @@
-# CircleCI terraform provider
+# CircleCI Terraform provider
+
+[![Build Status](https://circleci.com/gh/mrolla/terraform-provider-circleci.svg?style=shield)](https://circleci.com/gh/mrolla/terraform-provider-circleci.svg?style=shield) [![Go Report Card](https://goreportcard.com/badge/github.com/mrolla/terraform-provider-circleci)](https://goreportcard.com/badge/github.com/mrolla/terraform-provider-circleci)
 
 - Website: https://www.terraform.io
 - [![Gitter chat](https://badges.gitter.im/hashicorp-terraform/Lobby.png)](https://gitter.im/hashicorp-terraform/Lobby)
@@ -12,15 +14,21 @@
 - [Go][go] 1.11 (to build the provider plugin)
 
 ## Using the provider
-If you're building the provider, follow the instructions to [install it as a plugin.][install plugin].
-After placing it into your plugins directory,  run `terraform init` to initialize it.
 
-[install plugin]: https://www.terraform.io/docs/plugins/basics.html#installing-a-plugin
-[terraform]: https://www.terraform.io/downloads.html
-[go]: https://golang.org/doc/install
+### Download a release
+Download the latest release for your OS from the [release page][release page]
+and follow the instructions to [install third party plugins][third party plugins].
 
+### Build it from source
+To build the project you can use `make all` which:
+- run the tests (`make test`)
+- build the binary (`make build`)
+- copy the binary to the [Terraform plugin directory][third party plugins] (`make install_plugin_locally`)
 
-Example:
+After placing it into your plugins directory, run `terraform init` to initialize it.
+
+## Example:
+
 ```hcl
 provider "circleci" {
   api_token    = "${file("circleci_token")}"
@@ -42,3 +50,9 @@ To build the project you can use `make all` which:
 2. build the binary `make build`
 3. copy the binary to the terraform plugin directory (default $HOME/.terraform.d/plugins/)
  `make install_plugin_locally`
+
+[install plugin]: https://www.terraform.io/docs/plugins/basics.html#installing-a-plugin
+[third party plugins]: https://www.terraform.io/docs/configuration/providers.html#third-party-plugins
+[terraform]: https://www.terraform.io/downloads.html
+[go]: https://golang.org/doc/install
+[release page]: https://github.com/mrolla/terraform-provider-circleci/releases
