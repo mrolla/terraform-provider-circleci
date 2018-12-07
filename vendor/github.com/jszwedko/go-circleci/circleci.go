@@ -11,18 +11,25 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
+	"regexp"
 	"strconv"
 	"time"
 )
 
 const (
-	queryLimit = 100 // maximum that CircleCI allows
+	queryLimit        = 100                         // maximum that CircleCI allows
+	envVarNameValidRE = "^[[:alpha:]]+[[:word:]]*$" // source https://circleci.com/docs/2.0/env-vars/#injecting-environment-variables-with-the-api
 )
 
 var (
-	defaultBaseURL = &url.URL{Host: "circleci.com", Scheme: "https", Path: "/api/v1.1/"}
-	defaultLogger  = log.New(os.Stderr, "", log.LstdFlags)
+	defaultBaseURL            = &url.URL{Host: "circleci.com", Scheme: "https", Path: "/api/v1.1/"}
+	defaultLogger             = log.New(os.Stderr, "", log.LstdFlags)
+	envVarNameValidCompiledRE *regexp.Regexp
 )
+
+func init() {
+	envVarNameValidCompiledRE = regexp.MustCompile(envVarNameValidRE)
+}
 
 // Logger is a minimal interface for injecting custom logging logic for debug logs
 type Logger interface {
@@ -415,6 +422,10 @@ func (c *Client) ClearCache(vcsType, account, repo string) (string, error) {
 func (c *Client) AddEnvVar(vcsType, account, repo, name, value string) (*EnvVar, error) {
 	envVar := &EnvVar{}
 
+	if !ValidateEnvVarName(name) {
+		return nil, fmt.Errorf("environment variable name is not valid")
+	}
+
 	err := c.request("POST", fmt.Sprintf("project/%s/%s/%s/envvar", vcsType, account, repo), envVar, nil, &EnvVar{Name: name, Value: value})
 	if err != nil {
 		return nil, err
@@ -565,6 +576,11 @@ func (c *Client) AddHerokuKey(key string) error {
 	}{APIKey: key}
 
 	return c.request("POST", "/user/heroku-key", nil, nil, body)
+}
+
+// ValidateEnvVarName check an environment variable name is valid according to https://circleci.com/docs/2.0/env-vars/#injecting-environment-variables-with-the-api
+func ValidateEnvVarName(envVarName string) bool {
+	return envVarNameValidCompiledRE.Match([]byte(envVarName))
 }
 
 // EnvVar represents an environment variable

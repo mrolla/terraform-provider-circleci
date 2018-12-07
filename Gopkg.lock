@@ -315,12 +315,12 @@
   revision = "0b12d6b5"
 
 [[projects]]
-  branch = "dev/tg/getenvvar"
-  digest = "1:0d666b2d47fcdf032d1aada7e0ecbe2fa3524d3f974f183b4f2fef891772bf93"
+  branch = "dev/tg/regex"
+  digest = "1:9d4fdfdda6355356629e7865578c72405d737feb1a042cb3dbb7e97edc1e6142"
   name = "github.com/jszwedko/go-circleci"
   packages = ["."]
   pruneopts = "UT"
-  revision = "0cf6653233a0c343d734e086d547ad90540450b6"
+  revision = "bfc5b3445bba9c6d2f7accda72f06abe8dc8658e"
   source = "github.com/tgermain/go-circleci"
 
 [[projects]]

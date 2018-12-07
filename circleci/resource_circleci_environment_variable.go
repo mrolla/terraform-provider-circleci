@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform/helper/schema"
+
+	circleciapi "github.com/jszwedko/go-circleci"
 )
 
 func resourceCircleCIEnvironmentVariable() *schema.Resource {
@@ -36,6 +38,17 @@ func resourceCircleCIEnvironmentVariable() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
+				ValidateFunc: func(i interface{}, keyName string) (warnings []string, errors []error) {
+					v, ok := i.(string)
+					if !ok {
+						return nil, []error{fmt.Errorf("expected type of %s to be string", keyName)}
+					}
+					if !circleciapi.ValidateEnvVarName(v) {
+						return nil, []error{fmt.Errorf("environment variable name %s is not valid. See https://circleci.com/docs/2.0/env-vars/#injecting-environment-variables-with-the-api", v)}
+					}
+
+					return nil, nil
+				},
 			},
 			"value": &schema.Schema{
 				Description: "The value of the environment variable",
