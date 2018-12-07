@@ -13,4 +13,49 @@ jobs:
       - run:
           name: Build
           command: |
-            CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -a -o terraform-provider-circleci
+            CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -a -o build/terraform-provider-circleci-darwin-amd64
+            CGO_ENABLED=0 GOOS=linux GOARCH=386 go build -ldflags="-s -w" -a -o build/terraform-provider-circleci-linux-386
+            CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -a -o build/terraform-provider-circleci-linux-amd64
+            CGO_ENABLED=0 GOOS=linux GOARCH=arm go build -ldflags="-s -w" -a -o build/terraform-provider-circleci-linux-arm
+      - run:
+          name: Compute checksum of binaries
+          command: |
+            for binary in build/*; do
+              sha256sum -b $binary > $binary.sha256
+            done
+      - persist_to_workspace:
+          root: /go/src/github.com/mrolla/terraform-provider-circleci
+          paths:
+            - build
+  release:
+    working_directory: /build
+    docker:
+      - image: golang:1.11.1
+    steps:
+      - attach_workspace:
+          at: /
+      - run:
+          name: Instal GHR
+          command: |
+            go get github.com/tcnksm/ghr
+      - run:
+          name: Publish release
+          command: |
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete -draft ${CIRCLE_TAG} .
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - build:
+          filters:
+            tags:
+              only: /^\d+\.\d+\.\d+$/
+      - release:
+          requires:
+            - build
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^\d+\.\d+\.\d+$/
