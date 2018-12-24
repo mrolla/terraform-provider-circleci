@@ -25,7 +25,7 @@ func TestCircleCIEnvironmentVariableCreateThenUpdate(t *testing.T) {
 		Providers:    testProviders,
 		CheckDestroy: testCircleCIEnvironmentVariableCheckDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testCircleCIEnvironmentVariableConfig(project, envName, "value-for-the-test"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "project", project),
@@ -33,7 +33,7 @@ func TestCircleCIEnvironmentVariableCreateThenUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "value", "value-for-the-test"),
 				),
 			},
-			resource.TestStep{
+			{
 				Config: testCircleCIEnvironmentVariableConfig(project, envName, "value-for-the-test-again"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "project", project),
@@ -59,7 +59,7 @@ func TestCircleCIEnvironmentVariableCreateAlreadyExists(t *testing.T) {
 		},
 		CheckDestroy: testCircleCIEnvironmentVariableCheckDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testCircleCIEnvironmentVariableConfig(project, envName, envValue),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "project", project),
@@ -67,7 +67,7 @@ func TestCircleCIEnvironmentVariableCreateAlreadyExists(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "value", envValue),
 				),
 			},
-			resource.TestStep{
+			{
 				Config:      testCircleCIEnvironmentVariableConfigIdentical(project, envName, envValue),
 				ExpectError: regexp.MustCompile("already exists"),
 			},

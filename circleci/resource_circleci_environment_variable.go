@@ -27,13 +27,13 @@ func resourceCircleCIEnvironmentVariable() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"project": &schema.Schema{
+			"project": {
 				Description: "The name of the CircleCI project to create the variable in",
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 			},
-			"name": &schema.Schema{
+			"name": {
 				Description: "The name of the environment variable",
 				Type:        schema.TypeString,
 				Required:    true,
@@ -50,7 +50,7 @@ func resourceCircleCIEnvironmentVariable() *schema.Resource {
 					return nil, nil
 				},
 			},
-			"value": &schema.Schema{
+			"value": {
 				Description: "The value of the environment variable",
 				Type:        schema.TypeString,
 				Required:    true,
