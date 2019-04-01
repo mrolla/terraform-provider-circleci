@@ -2,8 +2,8 @@ version: 2
 jobs:
   build:
     docker:
-      - image: golang:1.11.1
-    working_directory: /go/src/github.com/mrolla/terraform-provider-circleci
+      - image: golang:1.12.1
+    working_directory: /terraform-provider-circleci
     steps:
       - checkout
       - run:
@@ -13,10 +13,10 @@ jobs:
       - run:
           name: Build
           command: |
-            CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -a -o build/terraform-provider-circleci-darwin-amd64
-            CGO_ENABLED=0 GOOS=linux GOARCH=386 go build -ldflags="-s -w" -a -o build/terraform-provider-circleci-linux-386
-            CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -a -o build/terraform-provider-circleci-linux-amd64
-            CGO_ENABLED=0 GOOS=linux GOARCH=arm go build -ldflags="-s -w" -a -o build/terraform-provider-circleci-linux-arm
+            CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -mod=vendor -ldflags="-s -w" -a -o build/terraform-provider-circleci-darwin-amd64
+            CGO_ENABLED=0 GOOS=linux GOARCH=386 go build -mod=vendor -ldflags="-s -w" -a -o build/terraform-provider-circleci-linux-386
+            CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -mod=vendor -ldflags="-s -w" -a -o build/terraform-provider-circleci-linux-amd64
+            CGO_ENABLED=0 GOOS=linux GOARCH=arm go build -mod=vendor -ldflags="-s -w" -a -o build/terraform-provider-circleci-linux-arm
       - run:
           name: Compute checksum of binaries
           command: |
@@ -24,13 +24,13 @@ jobs:
               sha256sum -b $binary > $binary.sha256
             done
       - persist_to_workspace:
-          root: /go/src/github.com/mrolla/terraform-provider-circleci
+          root: /terraform-provider-circleci
           paths:
             - build
   release:
     working_directory: /build
     docker:
-      - image: golang:1.11.1
+      - image: golang:1.12.1
     steps:
       - attach_workspace:
           at: /
