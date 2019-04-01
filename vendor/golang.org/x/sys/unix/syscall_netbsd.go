@@ -100,14 +100,14 @@ func SysctlClockinfo(name string) (*Clockinfo, error) {
 	}
 
 	n := uintptr(SizeofClockinfo)
-	buf := make([]byte, SizeofClockinfo)
-	if err := sysctl(mib, &buf[0], &n, nil, 0); err != nil {
+	var ci Clockinfo
+	if err := sysctl(mib, (*byte)(unsafe.Pointer(&ci)), &n, nil, 0); err != nil {
 		return nil, err
 	}
 	if n != SizeofClockinfo {
 		return nil, EIO
 	}
-	return (*Clockinfo)(unsafe.Pointer(&buf[0])), nil
+	return &ci, nil
 }
 
 //sysnb pipe() (fd1 int, fd2 int, err error)
@@ -300,6 +300,7 @@ func Uname(uname *Utsname) error {
 //sys	Mknod(path string, mode uint32, dev int) (err error)
 //sys	Nanosleep(time *Timespec, leftover *Timespec) (err error)
 //sys	Open(path string, mode int, perm uint32) (fd int, err error)
+//sys	Openat(dirfd int, path string, mode int, perm uint32) (fd int, err error)
 //sys	Pathconf(path string, name int) (val int, err error)
 //sys	Pread(fd int, p []byte, offset int64) (n int, err error)
 //sys	Pwrite(fd int, p []byte, offset int64) (n int, err error)
