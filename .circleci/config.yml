@@ -9,7 +9,7 @@ jobs:
       - run:
           name: Test
           command: |
-            go test -cover ./...
+            go test -mod=vendor -cover ./...
       - run:
           name: Build
           command: |
