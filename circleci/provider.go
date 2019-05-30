@@ -26,6 +26,12 @@ func Provider() terraform.ResourceProvider {
 				DefaultFunc: schema.EnvDefaultFunc("CIRCLECI_ORGANIZATION", nil),
 				Description: "The CircleCI organization.",
 			},
+			"url": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("CIRCLECI_URL", "https://circleci.com/api/v1.1"),
+				Description: "The URL of the Circle CI API.",
+			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"circleci_environment_variable": resourceCircleCIEnvironmentVariable(),
@@ -38,5 +44,6 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	token := d.Get("api_token").(string)
 	vcsType := d.Get("vcs_type").(string)
 	organization := d.Get("organization").(string)
-	return NewConfig(token, vcsType, organization), nil
+	url := d.Get("url").(string)
+	return NewConfig(token, vcsType, organization, url)
 }

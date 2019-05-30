@@ -1,6 +1,8 @@
 package circleci
 
 import (
+	"net/url"
+
 	circleciapi "github.com/jszwedko/go-circleci"
 )
 
@@ -12,14 +14,20 @@ type ProviderClient struct {
 }
 
 // NewConfig initialize circleci API client and returns a new config object
-func NewConfig(token, vscType, organization string) *ProviderClient {
+func NewConfig(token, vscType, organization, baseURL string) (*ProviderClient, error) {
+	parsedUrl, err := url.Parse(baseURL)
+	if err != nil {
+		return nil, err
+	}
+
 	return &ProviderClient{
 		client: &circleciapi.Client{
-			Token: token,
+			BaseURL: parsedUrl,
+			Token:   token,
 		},
 		vcsType:      vscType,
 		organization: organization,
-	}
+	}, nil
 }
 
 // GetEnvVar get the environment variable with given name
