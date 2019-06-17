@@ -27,6 +27,12 @@ func resourceCircleCIEnvironmentVariable() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
+			"organization": {
+				Description: "The CircleCI organization.",
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+			},
 			"project": {
 				Description: "The name of the CircleCI project to create the variable in",
 				Type:        schema.TypeString,
@@ -77,11 +83,12 @@ func hashString(str string) string {
 func resourceCircleCIEnvironmentVariableCreate(d *schema.ResourceData, m interface{}) error {
 	providerClient := m.(*ProviderClient)
 
+	organization := d.Get("organization").(string)
 	projectName := d.Get("project").(string)
 	envName := d.Get("name").(string)
 	envValue := d.Get("value").(string)
 
-	exists, err := providerClient.EnvVarExists(projectName, envName)
+	exists, err := providerClient.EnvVarExists(organization, projectName, envName)
 	if err != nil {
 		return err
 	}
@@ -90,7 +97,7 @@ func resourceCircleCIEnvironmentVariableCreate(d *schema.ResourceData, m interfa
 		return fmt.Errorf("environment variable '%s' already exists for project '%s'", envName, projectName)
 	}
 
-	if _, err := providerClient.AddEnvVar(projectName, envName, envValue); err != nil {
+	if _, err := providerClient.AddEnvVar(organization, projectName, envName, envValue); err != nil {
 		return err
 	}
 
@@ -102,10 +109,11 @@ func resourceCircleCIEnvironmentVariableCreate(d *schema.ResourceData, m interfa
 func resourceCircleCIEnvironmentVariableRead(d *schema.ResourceData, m interface{}) error {
 	providerClient := m.(*ProviderClient)
 
+	organization := d.Get("organization").(string)
 	projectName := d.Get("project").(string)
 	envName := d.Get("name").(string)
 
-	envVar, err := providerClient.GetEnvVar(projectName, envName)
+	envVar, err := providerClient.GetEnvVar(organization, projectName, envName)
 	if err != nil {
 		return err
 	}
@@ -122,10 +130,11 @@ func resourceCircleCIEnvironmentVariableRead(d *schema.ResourceData, m interface
 func resourceCircleCIEnvironmentVariableDelete(d *schema.ResourceData, m interface{}) error {
 	providerClient := m.(*ProviderClient)
 
+	organization := d.Get("organization").(string)
 	projectName := d.Get("project").(string)
 	envName := d.Get("name").(string)
 
-	err := providerClient.DeleteEnvVar(projectName, envName)
+	err := providerClient.DeleteEnvVar(organization, projectName, envName)
 	if err != nil {
 		return err
 	}
@@ -138,10 +147,11 @@ func resourceCircleCIEnvironmentVariableDelete(d *schema.ResourceData, m interfa
 func resourceCircleCIEnvironmentVariableExists(d *schema.ResourceData, m interface{}) (bool, error) {
 	providerClient := m.(*ProviderClient)
 
+	organization := d.Get("organization").(string)
 	projectName := d.Get("project").(string)
 	envName := d.Get("name").(string)
 
-	envVar, err := providerClient.GetEnvVar(projectName, envName)
+	envVar, err := providerClient.GetEnvVar(organization, projectName, envName)
 	if err != nil {
 		return false, err
 	}

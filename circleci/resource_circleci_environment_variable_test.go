@@ -14,6 +14,7 @@ import (
 
 func TestCircleCIEnvironmentVariableCreateThenUpdate(t *testing.T) {
 	project := os.Getenv("CIRCLECI_PROJECT")
+	organization := "ORG_" + acctest.RandString(8)
 	envName := "TEST_" + acctest.RandString(8)
 
 	resourceName := "circleci_environment_variable." + envName
@@ -26,7 +27,7 @@ func TestCircleCIEnvironmentVariableCreateThenUpdate(t *testing.T) {
 		CheckDestroy: testCircleCIEnvironmentVariableCheckDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testCircleCIEnvironmentVariableConfig(project, envName, "value-for-the-test"),
+				Config: testCircleCIEnvironmentVariableConfig(organization, project, envName, "value-for-the-test"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "project", project),
 					resource.TestCheckResourceAttr(resourceName, "name", envName),
@@ -34,7 +35,7 @@ func TestCircleCIEnvironmentVariableCreateThenUpdate(t *testing.T) {
 				),
 			},
 			{
-				Config: testCircleCIEnvironmentVariableConfig(project, envName, "value-for-the-test-again"),
+				Config: testCircleCIEnvironmentVariableConfig(organization, project, envName, "value-for-the-test-again"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "project", project),
 					resource.TestCheckResourceAttr(resourceName, "name", envName),
@@ -47,6 +48,7 @@ func TestCircleCIEnvironmentVariableCreateThenUpdate(t *testing.T) {
 
 func TestCircleCIEnvironmentVariableCreateAlreadyExists(t *testing.T) {
 	project := os.Getenv("CIRCLECI_PROJECT")
+	organization := "ORG_" + acctest.RandString(8)
 	envName := "TEST_" + acctest.RandString(8)
 	envValue := acctest.RandString(8)
 
@@ -60,7 +62,7 @@ func TestCircleCIEnvironmentVariableCreateAlreadyExists(t *testing.T) {
 		CheckDestroy: testCircleCIEnvironmentVariableCheckDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testCircleCIEnvironmentVariableConfig(project, envName, envValue),
+				Config: testCircleCIEnvironmentVariableConfig(organization, project, envName, envValue),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "project", project),
 					resource.TestCheckResourceAttr(resourceName, "name", envName),
@@ -68,7 +70,7 @@ func TestCircleCIEnvironmentVariableCreateAlreadyExists(t *testing.T) {
 				),
 			},
 			{
-				Config:      testCircleCIEnvironmentVariableConfigIdentical(project, envName, envValue),
+				Config:      testCircleCIEnvironmentVariableConfigIdentical(organization, project, envName, envValue),
 				ExpectError: regexp.MustCompile("already exists"),
 			},
 		},
@@ -83,7 +85,7 @@ func testCircleCIEnvironmentVariableCheckDestroy(s *terraform.State) error {
 			continue
 		}
 
-		envVar, err := providerClient.GetEnvVar(rs.Primary.Attributes["project"], rs.Primary.Attributes["name"])
+		envVar, err := providerClient.GetEnvVar(rs.Primary.Attributes["organization"], rs.Primary.Attributes["project"], rs.Primary.Attributes["name"])
 		if err != nil {
 			return err
 		}
@@ -96,26 +98,29 @@ func testCircleCIEnvironmentVariableCheckDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testCircleCIEnvironmentVariableConfig(project, name, value string) string {
+func testCircleCIEnvironmentVariableConfig(organization, project, name, value string) string {
 	return fmt.Sprintf(`
 resource "circleci_environment_variable" "%[2]s" {
-  project = "%[1]s"
-  name    = "%[2]s"
-  value   = "%[3]s"
-}`, project, name, value)
+  organization = "%[4]s"
+  project 	   = "%[1]s"
+  name    	   = "%[2]s"
+  value   	   = "%[3]s"
+}`, project, name, value, organization)
 }
 
-func testCircleCIEnvironmentVariableConfigIdentical(project, name, value string) string {
+func testCircleCIEnvironmentVariableConfigIdentical(organization, project, name, value string) string {
 	return fmt.Sprintf(`
 resource "circleci_environment_variable" "%[2]s" {
-  project = "%[1]s"
-  name    = "%[2]s"
-  value   = "%[3]s"
+  organization = "%[4]s"
+  project 	   = "%[1]s"
+  name    	   = "%[2]s"
+  value   	   = "%[3]s"
 }
 
 resource "circleci_environment_variable" "%[2]s_2" {
-  project = "%[1]s"
-  name    = "%[2]s"
-  value   = "%[3]s"
-}`, project, name, value)
+  organization = "%[4]s"
+  project 	   = "%[1]s"
+  name    	   = "%[2]s"
+  value   	   = "%[3]s"
+}`, project, name, value, organization)
 }

@@ -20,12 +20,6 @@ func Provider() terraform.ResourceProvider {
 				DefaultFunc: schema.EnvDefaultFunc("CIRCLECI_VCS_TYPE", "github"),
 				Description: "The VCS type for the organization.",
 			},
-			"organization": {
-				Type:        schema.TypeString,
-				Required:    true,
-				DefaultFunc: schema.EnvDefaultFunc("CIRCLECI_ORGANIZATION", nil),
-				Description: "The CircleCI organization.",
-			},
 			"url": {
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -43,7 +37,6 @@ func Provider() terraform.ResourceProvider {
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	token := d.Get("api_token").(string)
 	vcsType := d.Get("vcs_type").(string)
-	organization := d.Get("organization").(string)
 	url := d.Get("url").(string)
-	return NewConfig(token, vcsType, organization, url)
+	return NewConfig(token, vcsType, url)
 }
