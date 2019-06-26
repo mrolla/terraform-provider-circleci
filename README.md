@@ -10,8 +10,8 @@
 
 ## Requirements
 
-- [Terraform][terraform] 0.10.x
-- [Go][go] 1.11 (to build the provider plugin)
+- [Terraform][terraform] 0.12.x (it has also been tested with version 0.11+)
+- [Go][go] 1.11+ (to build the provider plugin)
 
 ## Using the provider
 
