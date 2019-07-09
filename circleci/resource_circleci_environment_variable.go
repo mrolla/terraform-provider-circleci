@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform/helper/schema"
@@ -101,13 +102,26 @@ func resourceCircleCIEnvironmentVariableCreate(d *schema.ResourceData, m interfa
 		return err
 	}
 
-	d.SetId(envName)
+	vars := []string{
+		*organization,
+		projectName,
+		envName,
+	}
+
+	d.SetId(strings.Join(vars, "."))
 
 	return resourceCircleCIEnvironmentVariableRead(d, m)
 }
 
 func resourceCircleCIEnvironmentVariableRead(d *schema.ResourceData, m interface{}) error {
 	providerClient := m.(*ProviderClient)
+
+	// If we don't have a project name we're doing an import. Parse it from the ID.
+	if _, ok := d.GetOk("name"); !ok {
+		if err := getEnvironmentVariableId(d); err != nil {
+			return err
+		}
+	}
 
 	organization := getOrganization(d, providerClient)
 	projectName := d.Get("project").(string)
@@ -147,6 +161,13 @@ func resourceCircleCIEnvironmentVariableDelete(d *schema.ResourceData, m interfa
 func resourceCircleCIEnvironmentVariableExists(d *schema.ResourceData, m interface{}) (bool, error) {
 	providerClient := m.(*ProviderClient)
 
+	// If we don't have a project name we're doing an import. Parse it from the ID.
+	if _, ok := d.GetOk("name"); !ok {
+		if err := getEnvironmentVariableId(d); err != nil {
+			return false, err
+		}
+	}
+
 	organization := getOrganization(d, providerClient)
 	projectName := d.Get("project").(string)
 	envName := d.Get("name").(string)
@@ -167,4 +188,30 @@ func getOrganization(d *schema.ResourceData, providerClient *ProviderClient) str
 	}
 
 	return providerClient.organization
+}
+
+func getEnvironmentVariableId(d *schema.ResourceData) error {
+	parts := parseEnvironmentVariableId(d.Id())
+	// Validate that he have values for all the ID segments. This should be at least 3
+	if parts[0] == "" || parts[1] == "" || parts[2] == "" {
+		return fmt.Errorf("error calculating circle_ci_environment_variable. Please make sure the ID is in the form ORGANIZATION.PROJECTNAME.VARNAME (i.e. foo.bar.my_var)")
+	}
+
+	d.Set("organization", parts[0])
+	d.Set("project", parts[1])
+	d.Set("name", parts[2])
+	return nil
+}
+
+func parseEnvironmentVariableId(id string) [3]string {
+	var organization, projectName, envName string
+	parts := strings.Split(id, ".")
+
+	if len(parts) == 3 {
+		organization = parts[0]
+		projectName = parts[1]
+		envName = parts[2]
+	}
+
+	return [3]string{organization, projectName, envName}
 }
