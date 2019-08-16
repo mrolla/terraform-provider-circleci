@@ -30,7 +30,7 @@ func resourceCircleCIEnvironmentVariable() *schema.Resource {
 			"organization": {
 				Description: "The CircleCI organization.",
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				ForceNew:    true,
 			},
 			"project": {
@@ -83,7 +83,7 @@ func hashString(str string) string {
 func resourceCircleCIEnvironmentVariableCreate(d *schema.ResourceData, m interface{}) error {
 	providerClient := m.(*ProviderClient)
 
-	organization := d.Get("organization").(string)
+	organization := getOrganization(d)
 	projectName := d.Get("project").(string)
 	envName := d.Get("name").(string)
 	envValue := d.Get("value").(string)
@@ -109,7 +109,7 @@ func resourceCircleCIEnvironmentVariableCreate(d *schema.ResourceData, m interfa
 func resourceCircleCIEnvironmentVariableRead(d *schema.ResourceData, m interface{}) error {
 	providerClient := m.(*ProviderClient)
 
-	organization := d.Get("organization").(string)
+	organization := getOrganization(d)
 	projectName := d.Get("project").(string)
 	envName := d.Get("name").(string)
 
@@ -130,7 +130,7 @@ func resourceCircleCIEnvironmentVariableRead(d *schema.ResourceData, m interface
 func resourceCircleCIEnvironmentVariableDelete(d *schema.ResourceData, m interface{}) error {
 	providerClient := m.(*ProviderClient)
 
-	organization := d.Get("organization").(string)
+	organization := getOrganization(d)
 	projectName := d.Get("project").(string)
 	envName := d.Get("name").(string)
 
@@ -147,7 +147,7 @@ func resourceCircleCIEnvironmentVariableDelete(d *schema.ResourceData, m interfa
 func resourceCircleCIEnvironmentVariableExists(d *schema.ResourceData, m interface{}) (bool, error) {
 	providerClient := m.(*ProviderClient)
 
-	organization := d.Get("organization").(string)
+	organization := getOrganization(d)
 	projectName := d.Get("project").(string)
 	envName := d.Get("name").(string)
 
@@ -157,4 +157,14 @@ func resourceCircleCIEnvironmentVariableExists(d *schema.ResourceData, m interfa
 	}
 
 	return bool(envVar.Value != ""), nil
+}
+
+func getOrganization(d *schema.ResourceData) *string {
+	organization, ok := d.GetOk("organization")
+	if ok {
+		org := organization.(string)
+		return &org
+	}
+
+	return nil
 }
