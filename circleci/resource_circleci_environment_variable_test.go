@@ -20,9 +20,8 @@ func TestCircleCIEnvironmentVariableOrganizationNotSet(t *testing.T) {
 		PreCheck: func() {
 			testPreCheck(t)
 		},
-		Providers:    testProviders,
-		CheckDestroy: testCircleCIEnvironmentVariableCheckDestroy,
-		IsUnitTest:   true,
+		Providers:  resourceOrgTestProviders,
+		IsUnitTest: true,
 		Steps: []resource.TestStep{
 			{
 				Config:      testCircleCIEnvironmentVariableConfigProviderOrg(project, envName, "value-for-the-test"),
@@ -67,7 +66,7 @@ func TestCircleCIEnvironmentVariableCreateThenUpdateProviderOrg(t *testing.T) {
 
 func TestCircleCIEnvironmentVariableCreateThenUpdateResourceOrg(t *testing.T) {
 	project := os.Getenv("CIRCLECI_PROJECT")
-	organization := "ORG_" + acctest.RandString(8)
+	organization := os.Getenv("TEST_CIRCLECI_ORGANIZATION")
 	envName := "TEST_" + acctest.RandString(8)
 
 	resourceName := "circleci_environment_variable." + envName
@@ -76,7 +75,7 @@ func TestCircleCIEnvironmentVariableCreateThenUpdateResourceOrg(t *testing.T) {
 		PreCheck: func() {
 			testPreCheck(t)
 		},
-		Providers:    testProviders,
+		Providers:    resourceOrgTestProviders,
 		CheckDestroy: testCircleCIEnvironmentVariableCheckDestroy,
 		Steps: []resource.TestStep{
 			{
@@ -101,7 +100,6 @@ func TestCircleCIEnvironmentVariableCreateThenUpdateResourceOrg(t *testing.T) {
 
 func TestCircleCIEnvironmentVariableCreateAlreadyExists(t *testing.T) {
 	project := os.Getenv("CIRCLECI_PROJECT")
-	organization := "ORG_" + acctest.RandString(8)
 	envName := "TEST_" + acctest.RandString(8)
 	envValue := acctest.RandString(8)
 
@@ -115,7 +113,7 @@ func TestCircleCIEnvironmentVariableCreateAlreadyExists(t *testing.T) {
 		CheckDestroy: testCircleCIEnvironmentVariableCheckDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testCircleCIEnvironmentVariableConfigResourceOrg(organization, project, envName, envValue),
+				Config: testCircleCIEnvironmentVariableConfigProviderOrg(project, envName, envValue),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "project", project),
 					resource.TestCheckResourceAttr(resourceName, "name", envName),
@@ -123,7 +121,7 @@ func TestCircleCIEnvironmentVariableCreateAlreadyExists(t *testing.T) {
 				),
 			},
 			{
-				Config:      testCircleCIEnvironmentVariableConfigIdentical(organization, project, envName, envValue),
+				Config:      testCircleCIEnvironmentVariableConfigIdentical(project, envName, envValue),
 				ExpectError: regexp.MustCompile("already exists"),
 			},
 		},
@@ -171,19 +169,17 @@ resource "circleci_environment_variable" "%[2]s" {
 }`, project, name, value, organization)
 }
 
-func testCircleCIEnvironmentVariableConfigIdentical(organization, project, name, value string) string {
+func testCircleCIEnvironmentVariableConfigIdentical(project, name, value string) string {
 	return fmt.Sprintf(`
 resource "circleci_environment_variable" "%[2]s" {
-  organization = "%[4]s"
   project 	   = "%[1]s"
   name    	   = "%[2]s"
   value   	   = "%[3]s"
 }
 
 resource "circleci_environment_variable" "%[2]s_2" {
-  organization = "%[4]s"
   project 	   = "%[1]s"
   name    	   = "%[2]s"
   value   	   = "%[3]s"
-}`, project, name, value, organization)
+}`, project, name, value)
 }
