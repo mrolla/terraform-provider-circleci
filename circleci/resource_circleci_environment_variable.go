@@ -197,9 +197,9 @@ func getEnvironmentVariableId(d *schema.ResourceData) error {
 		return fmt.Errorf("error calculating circle_ci_environment_variable. Please make sure the ID is in the form ORGANIZATION.PROJECTNAME.VARNAME (i.e. foo.bar.my_var)")
 	}
 
-	d.Set("organization", parts[0])
-	d.Set("project", parts[1])
-	d.Set("name", parts[2])
+	_ = d.Set("organization", parts[0])
+	_ = d.Set("project", parts[1])
+	_ = d.Set("name", parts[2])
 	return nil
 }
 
@@ -207,10 +207,10 @@ func parseEnvironmentVariableId(id string) [3]string {
 	var organization, projectName, envName string
 	parts := strings.Split(id, ".")
 
-	if len(parts) == 3 {
+	if len(parts) >= 3 {
 		organization = parts[0]
-		projectName = parts[1]
-		envName = parts[2]
+		projectName = strings.Join(parts[1:len(parts)-1], ".")
+		envName = parts[len(parts)-1]
 	}
 
 	return [3]string{organization, projectName, envName}
