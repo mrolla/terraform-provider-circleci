@@ -49,4 +49,8 @@ func testPreCheck(t *testing.T) {
 	if v := os.Getenv("CIRCLECI_ORGANIZATION"); v != "" {
 		t.Fatal("For testing purposes do not set CIRCLECI_ORGANIZATION instead set TEST_CIRCLECI_ORGANIZATION for acceptance tests")
 	}
+
+	if v := os.Getenv("TEST_CIRCLECI_ORGANIZATION"); v == "" {
+		t.Fatal("TEST_CIRCLECI_ORGANIZATION must be set for acceptance tests")
+	}
 }
