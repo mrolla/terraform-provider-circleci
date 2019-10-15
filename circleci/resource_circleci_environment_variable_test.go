@@ -41,7 +41,7 @@ func TestCircleCIEnvironmentVariableCreateThenUpdateProviderOrg(t *testing.T) {
 		PreCheck: func() {
 			testPreCheck(t)
 		},
-		Providers:    testProviders,
+		Providers:    providerOrgTestProviders,
 		CheckDestroy: testCircleCIEnvironmentVariableProviderOrgCheckDestroy,
 		Steps: []resource.TestStep{
 			{
@@ -106,7 +106,7 @@ func TestCircleCIEnvironmentVariableCreateAlreadyExists(t *testing.T) {
 	resourceName := "circleci_environment_variable." + envName
 
 	resource.Test(t, resource.TestCase{
-		Providers: testProviders,
+		Providers: providerOrgTestProviders,
 		PreCheck: func() {
 			testPreCheck(t)
 		},
@@ -134,7 +134,7 @@ func testCircleCIEnvironmentVariableResourceOrgCheckDestroy(s *terraform.State) 
 }
 
 func testCircleCIEnvironmentVariableProviderOrgCheckDestroy(s *terraform.State) error {
-	providerClient := testProvider.Meta().(*ProviderClient)
+	providerClient := providerOrgTestProvider.Meta().(*ProviderClient)
 	return testCircleCIEnvironmentVariableCheckDestroy(providerClient, s)
 }
 

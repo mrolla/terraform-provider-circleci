@@ -8,8 +8,8 @@ import (
 	"github.com/hashicorp/terraform/terraform"
 )
 
-var testProvider *schema.Provider
-var testProviders map[string]terraform.ResourceProvider
+var providerOrgTestProvider *schema.Provider
+var providerOrgTestProviders map[string]terraform.ResourceProvider
 
 var resourceOrgTestProvider *schema.Provider
 var resourceOrgTestProviders map[string]terraform.ResourceProvider
@@ -20,15 +20,15 @@ func init() {
 		"circleci": resourceOrgTestProvider,
 	}
 
-	testProvider = Provider().(*schema.Provider)
-	testProvider.Schema["organization"] = &schema.Schema{
+	providerOrgTestProvider = Provider().(*schema.Provider)
+	providerOrgTestProvider.Schema["organization"] = &schema.Schema{
 		Type:        schema.TypeString,
 		Optional:    true,
 		DefaultFunc: schema.EnvDefaultFunc("TEST_CIRCLECI_ORGANIZATION", nil),
 		Description: "The CircleCI organization.",
 	}
-	testProviders = map[string]terraform.ResourceProvider{
-		"circleci": testProvider,
+	providerOrgTestProviders = map[string]terraform.ResourceProvider{
+		"circleci": providerOrgTestProvider,
 	}
 }
 
