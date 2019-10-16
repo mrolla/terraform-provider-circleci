@@ -8,17 +8,32 @@ import (
 	"github.com/hashicorp/terraform/terraform"
 )
 
-var testProvider *schema.Provider
-var testProviders map[string]terraform.ResourceProvider
+var providerOrgTestProvider *schema.Provider
+var providerOrgTestProviders map[string]terraform.ResourceProvider
+
+var resourceOrgTestProvider *schema.Provider
+var resourceOrgTestProviders map[string]terraform.ResourceProvider
 
 func init() {
-	testProvider = Provider().(*schema.Provider)
-	testProviders = map[string]terraform.ResourceProvider{
-		"circleci": testProvider,
+	resourceOrgTestProvider = Provider().(*schema.Provider)
+	resourceOrgTestProviders = map[string]terraform.ResourceProvider{
+		"circleci": resourceOrgTestProvider,
+	}
+
+	providerOrgTestProvider = Provider().(*schema.Provider)
+	providerOrgTestProvider.Schema["organization"] = &schema.Schema{
+		Type:        schema.TypeString,
+		Optional:    true,
+		DefaultFunc: schema.EnvDefaultFunc("TEST_CIRCLECI_ORGANIZATION", nil),
+		Description: "The CircleCI organization.",
+	}
+	providerOrgTestProviders = map[string]terraform.ResourceProvider{
+		"circleci": providerOrgTestProvider,
 	}
 }
 
 func testPreCheck(t *testing.T) {
+
 	if v := os.Getenv("CIRCLECI_TOKEN"); v == "" {
 		t.Fatal("CIRCLECI_TOKEN must be set for acceptance tests")
 	}
@@ -27,11 +42,15 @@ func testPreCheck(t *testing.T) {
 		t.Fatal("CIRCLECI_VCS_TYPE must be set for acceptance tests")
 	}
 
-	if v := os.Getenv("CIRCLECI_ORGANIZATION"); v == "" {
-		t.Fatal("CIRCLECI_ORGANIZATION must be set for acceptance tests")
-	}
-
 	if v := os.Getenv("CIRCLECI_PROJECT"); v == "" {
 		t.Fatal("CIRCLECI_PROJECT must be set for acceptance tests")
+	}
+
+	if v := os.Getenv("CIRCLECI_ORGANIZATION"); v != "" {
+		t.Fatal("For testing purposes do not set CIRCLECI_ORGANIZATION instead set TEST_CIRCLECI_ORGANIZATION for acceptance tests")
+	}
+
+	if v := os.Getenv("TEST_CIRCLECI_ORGANIZATION"); v == "" {
+		t.Fatal("TEST_CIRCLECI_ORGANIZATION must be set for acceptance tests")
 	}
 }
