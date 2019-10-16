@@ -159,11 +159,11 @@ func resourceCircleCIEnvironmentVariableExists(d *schema.ResourceData, m interfa
 	return bool(envVar.Value != ""), nil
 }
 
-func getOrganization(d *schema.ResourceData, providerClient *ProviderClient) *string {
+func getOrganization(d *schema.ResourceData, providerClient *ProviderClient) string {
 	organization, ok := d.GetOk("organization")
 	if ok {
 		org := organization.(string)
-		return &org
+		return org
 	}
 
 	return providerClient.organization

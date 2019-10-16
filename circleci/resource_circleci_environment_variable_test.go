@@ -146,10 +146,10 @@ func testCircleCIEnvironmentVariableCheckDestroy(providerClient *ProviderClient,
 
 		organization := rs.Primary.Attributes["organization"]
 		if organization == "" {
-			organization = *providerClient.organization
+			organization = providerClient.organization
 		}
 
-		envVar, err := providerClient.GetEnvVar(&organization, rs.Primary.Attributes["project"], rs.Primary.Attributes["name"])
+		envVar, err := providerClient.GetEnvVar(organization, rs.Primary.Attributes["project"], rs.Primary.Attributes["name"])
 		if err != nil {
 			return err
 		}
