@@ -103,7 +103,7 @@ func resourceCircleCIEnvironmentVariableCreate(d *schema.ResourceData, m interfa
 	}
 
 	vars := []string{
-		*organization,
+		organization,
 		projectName,
 		envName,
 	}
@@ -191,20 +191,19 @@ func getOrganization(d *schema.ResourceData, providerClient *ProviderClient) str
 }
 
 func getEnvironmentVariableId(d *schema.ResourceData) error {
-	parts := parseEnvironmentVariableId(d.Id())
+	organization, projectName, envName := parseEnvironmentVariableId(d.Id())
 	// Validate that he have values for all the ID segments. This should be at least 3
-	if parts[0] == "" || parts[1] == "" || parts[2] == "" {
+	if organization == "" || projectName == "" || envName == "" {
 		return fmt.Errorf("error calculating circle_ci_environment_variable. Please make sure the ID is in the form ORGANIZATION.PROJECTNAME.VARNAME (i.e. foo.bar.my_var)")
 	}
 
-	_ = d.Set("organization", parts[0])
-	_ = d.Set("project", parts[1])
-	_ = d.Set("name", parts[2])
+	_ = d.Set("organization", organization)
+	_ = d.Set("project", projectName)
+	_ = d.Set("name", envName)
 	return nil
 }
 
-func parseEnvironmentVariableId(id string) [3]string {
-	var organization, projectName, envName string
+func parseEnvironmentVariableId(id string) (organization, projectName, envName string) {
 	parts := strings.Split(id, ".")
 
 	if len(parts) >= 3 {
@@ -213,5 +212,5 @@ func parseEnvironmentVariableId(id string) [3]string {
 		envName = parts[len(parts)-1]
 	}
 
-	return [3]string{organization, projectName, envName}
+	return organization, projectName, envName
 }
