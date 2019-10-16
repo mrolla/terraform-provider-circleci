@@ -3,6 +3,7 @@ package circleci
 import (
 	"errors"
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"os"
 	"regexp"
 	"testing"
@@ -201,6 +202,27 @@ func TestCircleCIEnvironmentVariableImportResourceOrg(t *testing.T) {
 			},
 		},
 	})
+}
+
+func TestParseEnvironmentVariableId(t *testing.T) {
+	organization := acctest.RandString(8)
+	envName := acctest.RandString(8)
+	projectNames := []string{
+		"TEST_" + acctest.RandString(8),
+		"TEST-" + acctest.RandString(8),
+		"TEST." + acctest.RandString(8),
+		"TEST_" + acctest.RandString(8) + "." + acctest.RandString(8),
+		"TEST-" + acctest.RandString(8) + "." + acctest.RandString(8),
+		"TEST." + acctest.RandString(8) + "." + acctest.RandString(8),
+	}
+
+	for _, name := range projectNames {
+		expectedId := organization + "." + name + "." + envName
+		actualOrganization, actualProjectName, actualEnvName := parseEnvironmentVariableId(expectedId)
+		assert.Equal(t, organization, actualOrganization)
+		assert.Equal(t, name, actualProjectName)
+		assert.Equal(t, envName, actualEnvName)
+	}
 }
 
 func testCircleCIEnvironmentVariableResourceOrgCheckDestroy(s *terraform.State) error {
