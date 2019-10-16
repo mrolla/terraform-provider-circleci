@@ -165,9 +165,9 @@ func testCircleCIEnvironmentVariableCheckDestroy(providerClient *ProviderClient,
 func testCircleCIEnvironmentVariableConfigProviderOrg(project, name, value string) string {
 	return fmt.Sprintf(`
 resource "circleci_environment_variable" "%[2]s" {
-  project 	   = "%[1]s"
-  name    	   = "%[2]s"
-  value   	   = "%[3]s"
+  project = "%[1]s"
+  name    = "%[2]s"
+  value   = "%[3]s"
 }`, project, name, value)
 }
 
@@ -184,14 +184,14 @@ resource "circleci_environment_variable" "%[2]s" {
 func testCircleCIEnvironmentVariableConfigIdentical(project, name, value string) string {
 	return fmt.Sprintf(`
 resource "circleci_environment_variable" "%[2]s" {
-  project 	   = "%[1]s"
-  name    	   = "%[2]s"
-  value   	   = "%[3]s"
+  project = "%[1]s"
+  name    = "%[2]s"
+  value   = "%[3]s"
 }
 
 resource "circleci_environment_variable" "%[2]s_2" {
-  project 	   = "%[1]s"
-  name    	   = "%[2]s"
-  value   	   = "%[3]s"
+  project = "%[1]s"
+  name    = "%[2]s"
+  value   = "%[3]s"
 }`, project, name, value)
 }
