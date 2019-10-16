@@ -71,7 +71,79 @@ func resourceCircleCIEnvironmentVariable() *schema.Resource {
 				},
 			},
 		},
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    resourceCircleCIEnvironmentVariableResourceV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: resourceCircleCIEnvironmentVariableUpgradeV0,
+				Version: 0,
+			},
+		},
 	}
+}
+
+func resourceCircleCIEnvironmentVariableResourceV0() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"organization": {
+				Description: "The CircleCI organization.",
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+			},
+			"project": {
+				Description: "The name of the CircleCI project to create the variable in",
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+			},
+			"name": {
+				Description: "The name of the environment variable",
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				ValidateFunc: func(i interface{}, keyName string) (warnings []string, errors []error) {
+					v, ok := i.(string)
+					if !ok {
+						return nil, []error{fmt.Errorf("expected type of %s to be string", keyName)}
+					}
+					if !circleciapi.ValidateEnvVarName(v) {
+						return nil, []error{fmt.Errorf("environment variable name %s is not valid. See https://circleci.com/docs/2.0/env-vars/#injecting-environment-variables-with-the-api", v)}
+					}
+
+					return nil, nil
+				},
+			},
+			"value": {
+				Description: "The value of the environment variable",
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Sensitive:   true,
+				StateFunc: func(value interface{}) string {
+					/* To avoid storing the value of the environment variable in the state
+					but still be able to know when the value change, we store a hash of the value.
+					*/
+					return hashString(value.(string))
+				},
+			},
+		},
+	}
+}
+
+func resourceCircleCIEnvironmentVariableUpgradeV0(rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+	var organization string
+	rawOrg := rawState["organization"]
+	if rawOrg != nil && rawOrg.(string) != "" {
+		organization = rawState["organization"].(string)
+	} else {
+		providerClient := meta.(*ProviderClient)
+		organization = providerClient.organization
+	}
+
+	rawState["id"] = generateId(organization, rawState["project"].(string), rawState["name"].(string))
+
+	return rawState, nil
 }
 
 // hashString do a sha256 checksum, encode it in base64 and return it as string
@@ -102,14 +174,7 @@ func resourceCircleCIEnvironmentVariableCreate(d *schema.ResourceData, m interfa
 		return err
 	}
 
-	vars := []string{
-		organization,
-		projectName,
-		envName,
-	}
-
-	d.SetId(strings.Join(vars, "."))
-
+	d.SetId(generateId(organization, projectName, envName))
 	return resourceCircleCIEnvironmentVariableRead(d, m)
 }
 
@@ -213,4 +278,13 @@ func parseEnvironmentVariableId(id string) (organization, projectName, envName s
 	}
 
 	return organization, projectName, envName
+}
+
+func generateId(organization, projectName, envName string) string {
+	vars := []string{
+		organization,
+		projectName,
+		envName,
+	}
+	return strings.Join(vars, ".")
 }

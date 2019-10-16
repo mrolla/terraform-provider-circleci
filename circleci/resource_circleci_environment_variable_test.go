@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"os"
+	"reflect"
 	"regexp"
 	"testing"
 
@@ -217,11 +218,80 @@ func TestParseEnvironmentVariableId(t *testing.T) {
 	}
 
 	for _, name := range projectNames {
-		expectedId := organization + "." + name + "." + envName
+		expectedId := fmt.Sprintf("%s.%s.%s", organization, name, envName)
 		actualOrganization, actualProjectName, actualEnvName := parseEnvironmentVariableId(expectedId)
 		assert.Equal(t, organization, actualOrganization)
 		assert.Equal(t, name, actualProjectName)
 		assert.Equal(t, envName, actualEnvName)
+	}
+}
+
+func testCircleCIEnvironmentVariableResourceOrgStateDataV0(organization, project, name string) map[string]interface{} {
+	return map[string]interface{}{
+		"id":           name,
+		"name":         name,
+		"project":      project,
+		"organization": organization,
+	}
+}
+
+func testCircleCIEnvironmentVariableNoOrgStateDataProviderOrgV0(project, name string) map[string]interface{} {
+	return map[string]interface{}{
+		"id":      name,
+		"name":    name,
+		"project": project,
+	}
+}
+
+func testCircleCIEnvironmentVariableResourceOrgStateDataV1(organization, project, name string) map[string]interface{} {
+	v0 := testCircleCIEnvironmentVariableResourceOrgStateDataV0(organization, project, name)
+	return map[string]interface{}{
+		"id":           fmt.Sprintf("%s.%s.%s", v0["organization"].(string), v0["project"].(string), v0["name"].(string)),
+		"name":         v0["name"].(string),
+		"project":      v0["project"].(string),
+		"organization": v0["organization"].(string),
+	}
+}
+
+func testCircleCIEnvironmentVariableNoOrgStateDataProviderOrgV1(organization, project, name string) map[string]interface{} {
+	v0 := testCircleCIEnvironmentVariableNoOrgStateDataProviderOrgV0(project, name)
+	return map[string]interface{}{
+		"id":      fmt.Sprintf("%s.%s.%s", organization, v0["project"].(string), v0["name"].(string)),
+		"name":    v0["name"].(string),
+		"project": v0["project"].(string),
+	}
+}
+
+func TestCircleCIEnvironmentVariableResourceOrgStateUpgradeV0(t *testing.T) {
+	project := os.Getenv("CIRCLECI_PROJECT")
+	envName := "TEST_" + acctest.RandString(8)
+	organization := os.Getenv("TEST_CIRCLECI_ORGANIZATION")
+	providerClient, _ := NewConfig("foo", os.Getenv("CIRCLECI_VCS_TYPE"), "http://example.com")
+	actual, err := resourceCircleCIEnvironmentVariableUpgradeV0(testCircleCIEnvironmentVariableResourceOrgStateDataV0(organization, project, envName), providerClient)
+	if err != nil {
+		t.Fatalf("error migrating state: %s", err)
+	}
+
+	expected := testCircleCIEnvironmentVariableResourceOrgStateDataV1(organization, project, envName)
+	if !reflect.DeepEqual(expected, actual) {
+		t.Fatalf("\n\nexpected:\n\n%#v\n\ngot:\n\n%#v\n\n", expected, actual)
+	}
+}
+
+func TestCircleCIEnvironmentVariableProviderOrgStateUpgradeV0(t *testing.T) {
+	project := os.Getenv("CIRCLECI_PROJECT")
+	envName := "TEST_" + acctest.RandString(8)
+	organization := os.Getenv("TEST_CIRCLECI_ORGANIZATION")
+	providerClient, _ := NewOrganizationConfig("foo", os.Getenv("CIRCLECI_VCS_TYPE"), os.Getenv("TEST_CIRCLECI_ORGANIZATION"), "http://example.com")
+
+	actual, err := resourceCircleCIEnvironmentVariableUpgradeV0(testCircleCIEnvironmentVariableNoOrgStateDataProviderOrgV1(organization, project, envName), providerClient)
+	if err != nil {
+		t.Fatalf("error migrating state: %s", err)
+	}
+
+	expected := testCircleCIEnvironmentVariableNoOrgStateDataProviderOrgV1(organization, project, envName)
+	if !reflect.DeepEqual(expected, actual) {
+		t.Fatalf("\n\nexpected:\n\n%#v\n\ngot:\n\n%#v\n\n", expected, actual)
 	}
 }
 
