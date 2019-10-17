@@ -183,7 +183,7 @@ func resourceCircleCIEnvironmentVariableRead(d *schema.ResourceData, m interface
 
 	// If we don't have a project name we're doing an import. Parse it from the ID.
 	if _, ok := d.GetOk("name"); !ok {
-		if err := getEnvironmentVariableId(d); err != nil {
+		if err := setOrgProjectNameFromEnvironmentVariableId(d); err != nil {
 			return err
 		}
 	}
@@ -228,7 +228,7 @@ func resourceCircleCIEnvironmentVariableExists(d *schema.ResourceData, m interfa
 
 	// If we don't have a project name we're doing an import. Parse it from the ID.
 	if _, ok := d.GetOk("name"); !ok {
-		if err := getEnvironmentVariableId(d); err != nil {
+		if err := setOrgProjectNameFromEnvironmentVariableId(d); err != nil {
 			return false, err
 		}
 	}
@@ -255,7 +255,7 @@ func getOrganization(d *schema.ResourceData, providerClient *ProviderClient) str
 	return providerClient.organization
 }
 
-func getEnvironmentVariableId(d *schema.ResourceData) error {
+func setOrgProjectNameFromEnvironmentVariableId(d *schema.ResourceData) error {
 	organization, projectName, envName := parseEnvironmentVariableId(d.Id())
 	// Validate that he have values for all the ID segments. This should be at least 3
 	if organization == "" || projectName == "" || envName == "" {
