@@ -8,32 +8,31 @@ import (
 	"github.com/hashicorp/terraform/terraform"
 )
 
-var providerOrgTestProvider *schema.Provider
-var providerOrgTestProviders map[string]terraform.ResourceProvider
+var testAccNoOrgProvider *schema.Provider
+var testAccNoOrgProviders map[string]terraform.ResourceProvider
 
-var resourceOrgTestProvider *schema.Provider
-var resourceOrgTestProviders map[string]terraform.ResourceProvider
+var testAccOrgProvider *schema.Provider
+var testAccOrgProviders map[string]terraform.ResourceProvider
 
 func init() {
-	resourceOrgTestProvider = Provider().(*schema.Provider)
-	resourceOrgTestProviders = map[string]terraform.ResourceProvider{
-		"circleci": resourceOrgTestProvider,
+	testAccNoOrgProvider = Provider().(*schema.Provider)
+	testAccNoOrgProviders = map[string]terraform.ResourceProvider{
+		"circleci": testAccNoOrgProvider,
 	}
 
-	providerOrgTestProvider = Provider().(*schema.Provider)
-	providerOrgTestProvider.Schema["organization"] = &schema.Schema{
+	testAccOrgProvider = Provider().(*schema.Provider)
+	testAccOrgProvider.Schema["organization"] = &schema.Schema{
 		Type:        schema.TypeString,
 		Optional:    true,
 		DefaultFunc: schema.EnvDefaultFunc("TEST_CIRCLECI_ORGANIZATION", nil),
 		Description: "The CircleCI organization.",
 	}
-	providerOrgTestProviders = map[string]terraform.ResourceProvider{
-		"circleci": providerOrgTestProvider,
+	testAccOrgProviders = map[string]terraform.ResourceProvider{
+		"circleci": testAccOrgProvider,
 	}
 }
 
-func testPreCheck(t *testing.T) {
-
+func testAccPreCheck(t *testing.T) {
 	if v := os.Getenv("CIRCLECI_TOKEN"); v == "" {
 		t.Fatal("CIRCLECI_TOKEN must be set for acceptance tests")
 	}
