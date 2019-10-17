@@ -13,26 +13,25 @@ import (
 	"github.com/hashicorp/terraform/terraform"
 )
 
-func TestCircleCIEnvironmentVariableOrganizationNotSet(t *testing.T) {
+func TestAccCircleCIEnvironmentVariableOrganizationNotSet(t *testing.T) {
 	project := "TEST_" + acctest.RandString(8)
 	envName := "TEST_" + acctest.RandString(8)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
-			testPreCheck(t)
+			testAccPreCheck(t)
 		},
-		Providers:  resourceOrgTestProviders,
-		IsUnitTest: true,
+		Providers: testAccNoOrgProviders,
 		Steps: []resource.TestStep{
 			{
-				Config:      testCircleCIEnvironmentVariableConfigProviderOrg(project, envName, "value-for-the-test"),
+				Config:      testAccCircleCIEnvironmentVariableConfigProviderOrg(project, envName, "value-for-the-test"),
 				ExpectError: regexp.MustCompile("organization has not been set for environment variable .*"),
 			},
 		},
 	})
 }
 
-func TestCircleCIEnvironmentVariableCreateThenUpdateProviderOrg(t *testing.T) {
+func TestAccCircleCIEnvironmentVariableCreateThenUpdateProviderOrg(t *testing.T) {
 	project := os.Getenv("CIRCLECI_PROJECT")
 	envName := "TEST_" + acctest.RandString(8)
 	resourceName := "circleci_environment_variable." + envName
@@ -40,13 +39,13 @@ func TestCircleCIEnvironmentVariableCreateThenUpdateProviderOrg(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
-			testPreCheck(t)
+			testAccPreCheck(t)
 		},
-		Providers:    providerOrgTestProviders,
-		CheckDestroy: testCircleCIEnvironmentVariableProviderOrgCheckDestroy,
+		Providers:    testAccOrgProviders,
+		CheckDestroy: testAccCircleCIEnvironmentVariableProviderOrgCheckDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testCircleCIEnvironmentVariableConfigProviderOrg(project, envName, "value-for-the-test"),
+				Config: testAccCircleCIEnvironmentVariableConfigProviderOrg(project, envName, "value-for-the-test"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "id", fmt.Sprintf("%s.%s.%s", organization, project, envName)),
 					resource.TestCheckResourceAttr(resourceName, "project", project),
@@ -55,7 +54,7 @@ func TestCircleCIEnvironmentVariableCreateThenUpdateProviderOrg(t *testing.T) {
 				),
 			},
 			{
-				Config: testCircleCIEnvironmentVariableConfigProviderOrg(project, envName, "value-for-the-test-again"),
+				Config: testAccCircleCIEnvironmentVariableConfigProviderOrg(project, envName, "value-for-the-test-again"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "id", fmt.Sprintf("%s.%s.%s", organization, project, envName)),
 					resource.TestCheckResourceAttr(resourceName, "project", project),
@@ -67,7 +66,7 @@ func TestCircleCIEnvironmentVariableCreateThenUpdateProviderOrg(t *testing.T) {
 	})
 }
 
-func TestCircleCIEnvironmentVariableCreateThenUpdateResourceOrg(t *testing.T) {
+func TestAccCircleCIEnvironmentVariableCreateThenUpdateResourceOrg(t *testing.T) {
 	project := os.Getenv("CIRCLECI_PROJECT")
 	organization := os.Getenv("TEST_CIRCLECI_ORGANIZATION")
 	envName := "TEST_" + acctest.RandString(8)
@@ -76,13 +75,13 @@ func TestCircleCIEnvironmentVariableCreateThenUpdateResourceOrg(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
-			testPreCheck(t)
+			testAccPreCheck(t)
 		},
-		Providers:    resourceOrgTestProviders,
-		CheckDestroy: testCircleCIEnvironmentVariableResourceOrgCheckDestroy,
+		Providers:    testAccNoOrgProviders,
+		CheckDestroy: testAccCircleCIEnvironmentVariableResourceOrgCheckDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testCircleCIEnvironmentVariableConfigResourceOrg(organization, project, envName, "value-for-the-test"),
+				Config: testAccCircleCIEnvironmentVariableConfigResourceOrg(organization, project, envName, "value-for-the-test"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "id", fmt.Sprintf("%s.%s.%s", organization, project, envName)),
 					resource.TestCheckResourceAttr(resourceName, "project", project),
@@ -91,7 +90,7 @@ func TestCircleCIEnvironmentVariableCreateThenUpdateResourceOrg(t *testing.T) {
 				),
 			},
 			{
-				Config: testCircleCIEnvironmentVariableConfigResourceOrg(organization, project, envName, "value-for-the-test-again"),
+				Config: testAccCircleCIEnvironmentVariableConfigResourceOrg(organization, project, envName, "value-for-the-test-again"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "id", fmt.Sprintf("%s.%s.%s", organization, project, envName)),
 					resource.TestCheckResourceAttr(resourceName, "project", project),
@@ -103,7 +102,7 @@ func TestCircleCIEnvironmentVariableCreateThenUpdateResourceOrg(t *testing.T) {
 	})
 }
 
-func TestCircleCIEnvironmentVariableCreateAlreadyExists(t *testing.T) {
+func TestAccCircleCIEnvironmentVariableCreateAlreadyExists(t *testing.T) {
 	project := os.Getenv("CIRCLECI_PROJECT")
 	envName := "TEST_" + acctest.RandString(8)
 	envValue := acctest.RandString(8)
@@ -112,14 +111,14 @@ func TestCircleCIEnvironmentVariableCreateAlreadyExists(t *testing.T) {
 	resourceName := "circleci_environment_variable." + envName
 
 	resource.Test(t, resource.TestCase{
-		Providers: providerOrgTestProviders,
+		Providers: testAccOrgProviders,
 		PreCheck: func() {
-			testPreCheck(t)
+			testAccPreCheck(t)
 		},
-		CheckDestroy: testCircleCIEnvironmentVariableProviderOrgCheckDestroy,
+		CheckDestroy: testAccCircleCIEnvironmentVariableProviderOrgCheckDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testCircleCIEnvironmentVariableConfigProviderOrg(project, envName, envValue),
+				Config: testAccCircleCIEnvironmentVariableConfigProviderOrg(project, envName, envValue),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "id", fmt.Sprintf("%s.%s.%s", organization, project, envName)),
 					resource.TestCheckResourceAttr(resourceName, "project", project),
@@ -128,14 +127,14 @@ func TestCircleCIEnvironmentVariableCreateAlreadyExists(t *testing.T) {
 				),
 			},
 			{
-				Config:      testCircleCIEnvironmentVariableConfigIdentical(project, envName, envValue),
+				Config:      testAccCircleCIEnvironmentVariableConfigIdentical(project, envName, envValue),
 				ExpectError: regexp.MustCompile("already exists"),
 			},
 		},
 	})
 }
 
-func TestCircleCIEnvironmentVariableImportProviderOrg(t *testing.T) {
+func TestAccCircleCIEnvironmentVariableImportProviderOrg(t *testing.T) {
 	project := os.Getenv("CIRCLECI_PROJECT")
 	envName := "TEST_" + acctest.RandString(8)
 	resourceName := "circleci_environment_variable." + envName
@@ -143,13 +142,13 @@ func TestCircleCIEnvironmentVariableImportProviderOrg(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
-			testPreCheck(t)
+			testAccPreCheck(t)
 		},
-		Providers:    providerOrgTestProviders,
-		CheckDestroy: testCircleCIEnvironmentVariableProviderOrgCheckDestroy,
+		Providers:    testAccOrgProviders,
+		CheckDestroy: testAccCircleCIEnvironmentVariableProviderOrgCheckDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testCircleCIEnvironmentVariableConfigResourceOrg(organization, project, envName, "value-for-the-test"),
+				Config: testAccCircleCIEnvironmentVariableConfigResourceOrg(organization, project, envName, "value-for-the-test"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "id", fmt.Sprintf("%s.%s.%s", organization, project, envName)),
 					resource.TestCheckResourceAttr(resourceName, "project", project),
@@ -169,7 +168,7 @@ func TestCircleCIEnvironmentVariableImportProviderOrg(t *testing.T) {
 	})
 }
 
-func TestCircleCIEnvironmentVariableImportResourceOrg(t *testing.T) {
+func TestAccCircleCIEnvironmentVariableImportResourceOrg(t *testing.T) {
 	project := os.Getenv("CIRCLECI_PROJECT")
 	organization := os.Getenv("TEST_CIRCLECI_ORGANIZATION")
 	envName := "TEST_" + acctest.RandString(8)
@@ -178,13 +177,13 @@ func TestCircleCIEnvironmentVariableImportResourceOrg(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
-			testPreCheck(t)
+			testAccPreCheck(t)
 		},
-		Providers:    resourceOrgTestProviders,
-		CheckDestroy: testCircleCIEnvironmentVariableResourceOrgCheckDestroy,
+		Providers:    testAccNoOrgProviders,
+		CheckDestroy: testAccCircleCIEnvironmentVariableResourceOrgCheckDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testCircleCIEnvironmentVariableConfigResourceOrg(organization, project, envName, "value-for-the-test"),
+				Config: testAccCircleCIEnvironmentVariableConfigResourceOrg(organization, project, envName, "value-for-the-test"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "id", fmt.Sprintf("%s.%s.%s", organization, project, envName)),
 					resource.TestCheckResourceAttr(resourceName, "project", project),
@@ -290,17 +289,17 @@ func TestCircleCIEnvironmentVariableProviderOrgStateUpgradeV0(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
-func testCircleCIEnvironmentVariableResourceOrgCheckDestroy(s *terraform.State) error {
-	providerClient := resourceOrgTestProvider.Meta().(*ProviderClient)
-	return testCircleCIEnvironmentVariableCheckDestroy(providerClient, s)
+func testAccCircleCIEnvironmentVariableResourceOrgCheckDestroy(s *terraform.State) error {
+	providerClient := testAccNoOrgProvider.Meta().(*ProviderClient)
+	return testAccCircleCIEnvironmentVariableCheckDestroy(providerClient, s)
 }
 
-func testCircleCIEnvironmentVariableProviderOrgCheckDestroy(s *terraform.State) error {
-	providerClient := providerOrgTestProvider.Meta().(*ProviderClient)
-	return testCircleCIEnvironmentVariableCheckDestroy(providerClient, s)
+func testAccCircleCIEnvironmentVariableProviderOrgCheckDestroy(s *terraform.State) error {
+	providerClient := testAccOrgProvider.Meta().(*ProviderClient)
+	return testAccCircleCIEnvironmentVariableCheckDestroy(providerClient, s)
 }
 
-func testCircleCIEnvironmentVariableCheckDestroy(providerClient *ProviderClient, s *terraform.State) error {
+func testAccCircleCIEnvironmentVariableCheckDestroy(providerClient *ProviderClient, s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "circleci_environment_variable" {
 			continue
@@ -324,7 +323,7 @@ func testCircleCIEnvironmentVariableCheckDestroy(providerClient *ProviderClient,
 	return nil
 }
 
-func testCircleCIEnvironmentVariableConfigProviderOrg(project, name, value string) string {
+func testAccCircleCIEnvironmentVariableConfigProviderOrg(project, name, value string) string {
 	return fmt.Sprintf(`
 resource "circleci_environment_variable" "%[2]s" {
   project = "%[1]s"
@@ -333,17 +332,17 @@ resource "circleci_environment_variable" "%[2]s" {
 }`, project, name, value)
 }
 
-func testCircleCIEnvironmentVariableConfigResourceOrg(organization, project, name, value string) string {
+func testAccCircleCIEnvironmentVariableConfigResourceOrg(organization, project, name, value string) string {
 	return fmt.Sprintf(`
 resource "circleci_environment_variable" "%[2]s" {
   organization = "%[4]s"
-  project 	   = "%[1]s"
-  name    	   = "%[2]s"
-  value   	   = "%[3]s"
+  project      = "%[1]s"
+  name         = "%[2]s"
+  value        = "%[3]s"
 }`, project, name, value, organization)
 }
 
-func testCircleCIEnvironmentVariableConfigIdentical(project, name, value string) string {
+func testAccCircleCIEnvironmentVariableConfigIdentical(project, name, value string) string {
 	return fmt.Sprintf(`
 resource "circleci_environment_variable" "%[2]s" {
   project = "%[1]s"
