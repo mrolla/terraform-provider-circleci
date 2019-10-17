@@ -3,6 +3,7 @@ package circleci
 import (
 	"errors"
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"os"
 	"regexp"
 	"testing"
@@ -34,8 +35,8 @@ func TestCircleCIEnvironmentVariableOrganizationNotSet(t *testing.T) {
 func TestCircleCIEnvironmentVariableCreateThenUpdateProviderOrg(t *testing.T) {
 	project := os.Getenv("CIRCLECI_PROJECT")
 	envName := "TEST_" + acctest.RandString(8)
-
 	resourceName := "circleci_environment_variable." + envName
+	organization := os.Getenv("TEST_CIRCLECI_ORGANIZATION")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -47,6 +48,7 @@ func TestCircleCIEnvironmentVariableCreateThenUpdateProviderOrg(t *testing.T) {
 			{
 				Config: testCircleCIEnvironmentVariableConfigProviderOrg(project, envName, "value-for-the-test"),
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "id", fmt.Sprintf("%s.%s.%s", organization, project, envName)),
 					resource.TestCheckResourceAttr(resourceName, "project", project),
 					resource.TestCheckResourceAttr(resourceName, "name", envName),
 					resource.TestCheckResourceAttr(resourceName, "value", hashString("value-for-the-test")),
@@ -55,6 +57,7 @@ func TestCircleCIEnvironmentVariableCreateThenUpdateProviderOrg(t *testing.T) {
 			{
 				Config: testCircleCIEnvironmentVariableConfigProviderOrg(project, envName, "value-for-the-test-again"),
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "id", fmt.Sprintf("%s.%s.%s", organization, project, envName)),
 					resource.TestCheckResourceAttr(resourceName, "project", project),
 					resource.TestCheckResourceAttr(resourceName, "name", envName),
 					resource.TestCheckResourceAttr(resourceName, "value", hashString("value-for-the-test-again")),
@@ -81,6 +84,7 @@ func TestCircleCIEnvironmentVariableCreateThenUpdateResourceOrg(t *testing.T) {
 			{
 				Config: testCircleCIEnvironmentVariableConfigResourceOrg(organization, project, envName, "value-for-the-test"),
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "id", fmt.Sprintf("%s.%s.%s", organization, project, envName)),
 					resource.TestCheckResourceAttr(resourceName, "project", project),
 					resource.TestCheckResourceAttr(resourceName, "name", envName),
 					resource.TestCheckResourceAttr(resourceName, "value", hashString("value-for-the-test")),
@@ -89,6 +93,7 @@ func TestCircleCIEnvironmentVariableCreateThenUpdateResourceOrg(t *testing.T) {
 			{
 				Config: testCircleCIEnvironmentVariableConfigResourceOrg(organization, project, envName, "value-for-the-test-again"),
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "id", fmt.Sprintf("%s.%s.%s", organization, project, envName)),
 					resource.TestCheckResourceAttr(resourceName, "project", project),
 					resource.TestCheckResourceAttr(resourceName, "name", envName),
 					resource.TestCheckResourceAttr(resourceName, "value", hashString("value-for-the-test-again")),
@@ -102,6 +107,7 @@ func TestCircleCIEnvironmentVariableCreateAlreadyExists(t *testing.T) {
 	project := os.Getenv("CIRCLECI_PROJECT")
 	envName := "TEST_" + acctest.RandString(8)
 	envValue := acctest.RandString(8)
+	organization := os.Getenv("TEST_CIRCLECI_ORGANIZATION")
 
 	resourceName := "circleci_environment_variable." + envName
 
@@ -115,6 +121,7 @@ func TestCircleCIEnvironmentVariableCreateAlreadyExists(t *testing.T) {
 			{
 				Config: testCircleCIEnvironmentVariableConfigProviderOrg(project, envName, envValue),
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "id", fmt.Sprintf("%s.%s.%s", organization, project, envName)),
 					resource.TestCheckResourceAttr(resourceName, "project", project),
 					resource.TestCheckResourceAttr(resourceName, "name", envName),
 					resource.TestCheckResourceAttr(resourceName, "value", hashString(envValue)),
@@ -126,6 +133,161 @@ func TestCircleCIEnvironmentVariableCreateAlreadyExists(t *testing.T) {
 			},
 		},
 	})
+}
+
+func TestCircleCIEnvironmentVariableImportProviderOrg(t *testing.T) {
+	project := os.Getenv("CIRCLECI_PROJECT")
+	envName := "TEST_" + acctest.RandString(8)
+	resourceName := "circleci_environment_variable." + envName
+	organization := os.Getenv("TEST_CIRCLECI_ORGANIZATION")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			testPreCheck(t)
+		},
+		Providers:    providerOrgTestProviders,
+		CheckDestroy: testCircleCIEnvironmentVariableProviderOrgCheckDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testCircleCIEnvironmentVariableConfigResourceOrg(organization, project, envName, "value-for-the-test"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "id", fmt.Sprintf("%s.%s.%s", organization, project, envName)),
+					resource.TestCheckResourceAttr(resourceName, "project", project),
+					resource.TestCheckResourceAttr(resourceName, "name", envName),
+					resource.TestCheckResourceAttr(resourceName, "value", hashString("value-for-the-test")),
+				),
+			},
+			{
+				ResourceName:      fmt.Sprintf("circleci_environment_variable.%s", envName),
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"value",
+				},
+			},
+		},
+	})
+}
+
+func TestCircleCIEnvironmentVariableImportResourceOrg(t *testing.T) {
+	project := os.Getenv("CIRCLECI_PROJECT")
+	organization := os.Getenv("TEST_CIRCLECI_ORGANIZATION")
+	envName := "TEST_" + acctest.RandString(8)
+
+	resourceName := "circleci_environment_variable." + envName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			testPreCheck(t)
+		},
+		Providers:    resourceOrgTestProviders,
+		CheckDestroy: testCircleCIEnvironmentVariableResourceOrgCheckDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testCircleCIEnvironmentVariableConfigResourceOrg(organization, project, envName, "value-for-the-test"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "id", fmt.Sprintf("%s.%s.%s", organization, project, envName)),
+					resource.TestCheckResourceAttr(resourceName, "project", project),
+					resource.TestCheckResourceAttr(resourceName, "name", envName),
+					resource.TestCheckResourceAttr(resourceName, "value", hashString("value-for-the-test")),
+				),
+			},
+			{
+				ResourceName:      fmt.Sprintf("circleci_environment_variable.%s", envName),
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"value",
+				},
+			},
+		},
+	})
+}
+
+func TestParseEnvironmentVariableId(t *testing.T) {
+	organization := acctest.RandString(8)
+	envName := acctest.RandString(8)
+	projectNames := []string{
+		"TEST_" + acctest.RandString(8),
+		"TEST-" + acctest.RandString(8),
+		"TEST." + acctest.RandString(8),
+		"TEST_" + acctest.RandString(8) + "." + acctest.RandString(8),
+		"TEST-" + acctest.RandString(8) + "." + acctest.RandString(8),
+		"TEST." + acctest.RandString(8) + "." + acctest.RandString(8),
+	}
+
+	for _, name := range projectNames {
+		expectedId := fmt.Sprintf("%s.%s.%s", organization, name, envName)
+		actualOrganization, actualProjectName, actualEnvName := parseEnvironmentVariableId(expectedId)
+		assert.Equal(t, organization, actualOrganization)
+		assert.Equal(t, name, actualProjectName)
+		assert.Equal(t, envName, actualEnvName)
+	}
+}
+
+func testCircleCIEnvironmentVariableResourceOrgStateDataV0(organization, project, name string) map[string]interface{} {
+	return map[string]interface{}{
+		"id":           name,
+		"name":         name,
+		"project":      project,
+		"organization": organization,
+	}
+}
+
+func testCircleCIEnvironmentVariableNoOrgStateDataProviderOrgV0(project, name string) map[string]interface{} {
+	return map[string]interface{}{
+		"id":      name,
+		"name":    name,
+		"project": project,
+	}
+}
+
+func testCircleCIEnvironmentVariableResourceOrgStateDataV1(organization, project, name string) map[string]interface{} {
+	v0 := testCircleCIEnvironmentVariableResourceOrgStateDataV0(organization, project, name)
+	return map[string]interface{}{
+		"id":           fmt.Sprintf("%s.%s.%s", v0["organization"].(string), v0["project"].(string), v0["name"].(string)),
+		"name":         v0["name"].(string),
+		"project":      v0["project"].(string),
+		"organization": v0["organization"].(string),
+	}
+}
+
+func testCircleCIEnvironmentVariableNoOrgStateDataProviderOrgV1(organization, project, name string) map[string]interface{} {
+	v0 := testCircleCIEnvironmentVariableNoOrgStateDataProviderOrgV0(project, name)
+	return map[string]interface{}{
+		"id":      fmt.Sprintf("%s.%s.%s", organization, v0["project"].(string), v0["name"].(string)),
+		"name":    v0["name"].(string),
+		"project": v0["project"].(string),
+	}
+}
+
+func TestCircleCIEnvironmentVariableResourceOrgStateUpgradeV0(t *testing.T) {
+	project := os.Getenv("CIRCLECI_PROJECT")
+	envName := "TEST_" + acctest.RandString(8)
+	organization := os.Getenv("TEST_CIRCLECI_ORGANIZATION")
+	providerClient, _ := NewConfig("foo", os.Getenv("CIRCLECI_VCS_TYPE"), "http://example.com")
+	actual, err := resourceCircleCIEnvironmentVariableUpgradeV0(testCircleCIEnvironmentVariableResourceOrgStateDataV0(organization, project, envName), providerClient)
+	if err != nil {
+		t.Fatalf("error migrating state: %s", err)
+	}
+
+	expected := testCircleCIEnvironmentVariableResourceOrgStateDataV1(organization, project, envName)
+	assert.Equal(t, expected, actual)
+}
+
+func TestCircleCIEnvironmentVariableProviderOrgStateUpgradeV0(t *testing.T) {
+	project := os.Getenv("CIRCLECI_PROJECT")
+	envName := "TEST_" + acctest.RandString(8)
+	organization := os.Getenv("TEST_CIRCLECI_ORGANIZATION")
+	providerClient, _ := NewOrganizationConfig("foo", os.Getenv("CIRCLECI_VCS_TYPE"), os.Getenv("TEST_CIRCLECI_ORGANIZATION"), "http://example.com")
+
+	actual, err := resourceCircleCIEnvironmentVariableUpgradeV0(testCircleCIEnvironmentVariableNoOrgStateDataProviderOrgV0(project, envName), providerClient)
+	if err != nil {
+		t.Fatalf("error migrating state: %s", err)
+	}
+
+	expected := testCircleCIEnvironmentVariableNoOrgStateDataProviderOrgV1(organization, project, envName)
+	assert.Equal(t, expected, actual)
 }
 
 func testCircleCIEnvironmentVariableResourceOrgCheckDestroy(s *terraform.State) error {
