@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"os"
-	"reflect"
 	"regexp"
 	"testing"
 
@@ -273,9 +272,7 @@ func TestCircleCIEnvironmentVariableResourceOrgStateUpgradeV0(t *testing.T) {
 	}
 
 	expected := testCircleCIEnvironmentVariableResourceOrgStateDataV1(organization, project, envName)
-	if !reflect.DeepEqual(expected, actual) {
-		t.Fatalf("\n\nexpected:\n\n%#v\n\ngot:\n\n%#v\n\n", expected, actual)
-	}
+	assert.Equal(t, expected, actual)
 }
 
 func TestCircleCIEnvironmentVariableProviderOrgStateUpgradeV0(t *testing.T) {
@@ -284,15 +281,13 @@ func TestCircleCIEnvironmentVariableProviderOrgStateUpgradeV0(t *testing.T) {
 	organization := os.Getenv("TEST_CIRCLECI_ORGANIZATION")
 	providerClient, _ := NewOrganizationConfig("foo", os.Getenv("CIRCLECI_VCS_TYPE"), os.Getenv("TEST_CIRCLECI_ORGANIZATION"), "http://example.com")
 
-	actual, err := resourceCircleCIEnvironmentVariableUpgradeV0(testCircleCIEnvironmentVariableNoOrgStateDataProviderOrgV1(organization, project, envName), providerClient)
+	actual, err := resourceCircleCIEnvironmentVariableUpgradeV0(testCircleCIEnvironmentVariableNoOrgStateDataProviderOrgV0(project, envName), providerClient)
 	if err != nil {
 		t.Fatalf("error migrating state: %s", err)
 	}
 
 	expected := testCircleCIEnvironmentVariableNoOrgStateDataProviderOrgV1(organization, project, envName)
-	if !reflect.DeepEqual(expected, actual) {
-		t.Fatalf("\n\nexpected:\n\n%#v\n\ngot:\n\n%#v\n\n", expected, actual)
-	}
+	assert.Equal(t, expected, actual)
 }
 
 func testCircleCIEnvironmentVariableResourceOrgCheckDestroy(s *terraform.State) error {
