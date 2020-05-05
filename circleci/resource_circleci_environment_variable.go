@@ -70,6 +70,12 @@ func resourceCircleCIEnvironmentVariable() *schema.Resource {
 					return hashString(value.(string))
 				},
 			},
+			"retain_on_destroy": {
+				Description: "Set to true to prevent terraform from deleting the environment variable when this resource is destroyed.",
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+			},
 		},
 		SchemaVersion: 1,
 		StateUpgraders: []schema.StateUpgrader{
@@ -212,6 +218,12 @@ func resourceCircleCIEnvironmentVariableDelete(d *schema.ResourceData, m interfa
 	organization := getOrganization(d, providerClient)
 	projectName := d.Get("project").(string)
 	envName := d.Get("name").(string)
+	shouldRetain := d.Get("retain_on_destroy").(bool)
+
+	if shouldRetain {
+		d.SetId("")
+		return nil
+	}
 
 	err := providerClient.DeleteEnvVar(organization, projectName, envName)
 	if err != nil {
