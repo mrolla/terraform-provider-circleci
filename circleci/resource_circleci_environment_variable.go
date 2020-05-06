@@ -3,10 +3,13 @@ package circleci
 import (
 	"crypto/sha256"
 	"encoding/base64"
+	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 
 	circleciapi "github.com/jszwedko/go-circleci"
@@ -24,6 +27,8 @@ func resourceCircleCIEnvironmentVariable() *schema.Resource {
 
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(5 * time.Minute),
+			Read:   schema.DefaultTimeout(5 * time.Minute),
+			Update: schema.DefaultTimeout(5 * time.Minute),
 			Delete: schema.DefaultTimeout(5 * time.Minute),
 		},
 
@@ -153,6 +158,21 @@ func hashString(str string) string {
 	return base64.StdEncoding.EncodeToString(hash[:])
 }
 
+func wrap(err error) *resource.RetryError {
+	if err == nil {
+		return nil
+	}
+
+	var apiErr circleciapi.APIError
+	if errors.As(err, &apiErr) {
+		switch apiErr.HTTPStatusCode {
+		case http.StatusTooManyRequests, http.StatusServiceUnavailable, http.StatusInternalServerError, http.StatusBadGateway:
+			return resource.RetryableError(err)
+		}
+	}
+	return resource.NonRetryableError(err)
+}
+
 func resourceCircleCIEnvironmentVariableCreate(d *schema.ResourceData, m interface{}) error {
 	providerClient := m.(*ProviderClient)
 
@@ -161,21 +181,23 @@ func resourceCircleCIEnvironmentVariableCreate(d *schema.ResourceData, m interfa
 	envName := d.Get("name").(string)
 	envValue := d.Get("value").(string)
 
-	exists, err := providerClient.EnvVarExists(organization, projectName, envName)
-	if err != nil {
-		return err
-	}
+	return resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
+		exists, err := providerClient.EnvVarExists(organization, projectName, envName)
+		if err != nil {
+			return wrap(err)
+		}
 
-	if exists {
-		return fmt.Errorf("environment variable '%s' already exists for project '%s'", envName, projectName)
-	}
+		if exists {
+			return wrap(fmt.Errorf("environment variable '%s' already exists for project '%s'", envName, projectName))
+		}
 
-	if _, err := providerClient.AddEnvVar(organization, projectName, envName, envValue); err != nil {
-		return err
-	}
+		if _, err := providerClient.AddEnvVar(organization, projectName, envName, envValue); err != nil {
+			return wrap(err)
+		}
 
-	d.SetId(generateId(organization, projectName, envName))
-	return resourceCircleCIEnvironmentVariableRead(d, m)
+		d.SetId(generateId(organization, projectName, envName))
+		return wrap(resourceCircleCIEnvironmentVariableRead(d, m))
+	})
 }
 
 func resourceCircleCIEnvironmentVariableRead(d *schema.ResourceData, m interface{}) error {
@@ -192,18 +214,20 @@ func resourceCircleCIEnvironmentVariableRead(d *schema.ResourceData, m interface
 	projectName := d.Get("project").(string)
 	envName := d.Get("name").(string)
 
-	envVar, err := providerClient.GetEnvVar(organization, projectName, envName)
-	if err != nil {
-		return err
-	}
+	return resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
+		envVar, err := providerClient.GetEnvVar(organization, projectName, envName)
+		if err != nil {
+			return wrap(err)
+		}
 
-	if err := d.Set("name", envVar.Name); err != nil {
-		return err
-	}
+		if err := d.Set("name", envVar.Name); err != nil {
+			return wrap(err)
+		}
 
-	// environment variable value can only be set at creation since CircleCI API return hidden values : https://circleci.com/docs/api/#list-environment-variables
-	// also it is better to avoid storing sensitive value in terraform state if possible.
-	return nil
+		// environment variable value can only be set at creation since CircleCI API return hidden values : https://circleci.com/docs/api/#list-environment-variables
+		// also it is better to avoid storing sensitive value in terraform state if possible.
+		return nil
+	})
 }
 
 func resourceCircleCIEnvironmentVariableDelete(d *schema.ResourceData, m interface{}) error {
@@ -213,14 +237,16 @@ func resourceCircleCIEnvironmentVariableDelete(d *schema.ResourceData, m interfa
 	projectName := d.Get("project").(string)
 	envName := d.Get("name").(string)
 
-	err := providerClient.DeleteEnvVar(organization, projectName, envName)
-	if err != nil {
-		return err
-	}
+	return resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
+		err := providerClient.DeleteEnvVar(organization, projectName, envName)
+		if err != nil {
+			return wrap(err)
+		}
 
-	d.SetId("")
+		d.SetId("")
 
-	return nil
+		return nil
+	})
 }
 
 func resourceCircleCIEnvironmentVariableExists(d *schema.ResourceData, m interface{}) (bool, error) {
@@ -237,12 +263,14 @@ func resourceCircleCIEnvironmentVariableExists(d *schema.ResourceData, m interfa
 	projectName := d.Get("project").(string)
 	envName := d.Get("name").(string)
 
-	envVar, err := providerClient.GetEnvVar(organization, projectName, envName)
-	if err != nil {
-		return false, err
-	}
+	var envVar *circleciapi.EnvVar
+	err := resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
+		e, err := providerClient.GetEnvVar(organization, projectName, envName)
+		envVar = e
+		return wrap(err)
+	})
 
-	return bool(envVar.Value != ""), nil
+	return bool(envVar.Value != ""), err
 }
 
 func getOrganization(d *schema.ResourceData, providerClient *ProviderClient) string {
