@@ -74,6 +74,7 @@ func resourceCircleCIEnvironmentVariable() *schema.Resource {
 				Description: "Set to true to prevent terraform from deleting the environment variable when this resource is destroyed.",
 				Type:        schema.TypeBool,
 				Optional:    true,
+				ForceNew:    true,
 				Default:     false,
 			},
 		},
