@@ -163,8 +163,8 @@ func wrap(err error) *resource.RetryError {
 		return nil
 	}
 
-	var apiErr *circleciapi.APIError
-	if errors.As(err, apiErr) {
+	var apiErr circleciapi.APIError
+	if errors.As(err, &apiErr) {
 		switch apiErr.HTTPStatusCode {
 		case http.StatusTooManyRequests, http.StatusServiceUnavailable, http.StatusInternalServerError, http.StatusBadGateway:
 			return resource.RetryableError(err)
