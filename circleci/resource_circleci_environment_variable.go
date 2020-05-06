@@ -159,6 +159,10 @@ func hashString(str string) string {
 }
 
 func wrap(err error) *resource.RetryError {
+	if err == nil {
+		return nil
+	}
+
 	var apiErr *circleciapi.APIError
 	if errors.As(err, apiErr) {
 		switch apiErr.HTTPStatusCode {
