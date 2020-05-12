@@ -33,18 +33,14 @@ func resourceCircleCIContextEnvironmentVariable() *schema.Resource {
 				Description: "The name of the environment variable",
 			},
 			"value": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Description: "The value that will be set for the environment variable. This will be displayed as plain text in a plan.",
-			},
-			"sensitive_value": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				ForceNew:      true,
-				Sensitive:     true,
-				ConflictsWith: []string{"value"},
-				Description:   "The value that will be set for the environment variable. This will be hidden as sensitive during a plan.",
+				Type:      schema.TypeString,
+				Required:  true,
+				ForceNew:  true,
+				Sensitive: true,
+				StateFunc: func(value interface{}) string {
+					return hashString(value.(string))
+				},
+				Description: "The value that will be set for the environment variable.",
 			},
 			"context_id": {
 				Type:        schema.TypeString,
@@ -58,19 +54,10 @@ func resourceCircleCIContextEnvironmentVariable() *schema.Resource {
 
 func resourceCircleCIContextEnvironmentVariableCreate(d *schema.ResourceData, m interface{}) error {
 	client := m.(*Client)
+
 	variable := d.Get("variable").(string)
 	context := d.Get("context_id").(string)
-
-	var value string
-	if v, ok := d.GetOk("sensitive_value"); ok {
-		value = v.(string)
-	} else {
-		value = d.Get("value").(string)
-	}
-
-	if value == "" {
-		return errors.New("one of 'value' or 'sensitive_value' is required")
-	}
+	value := d.Get("value").(string)
 
 	if err := api.StoreEnvironmentVariable(client.graphql, context, variable, value); err != nil {
 		return fmt.Errorf("error storing environment variable: %w", err)
