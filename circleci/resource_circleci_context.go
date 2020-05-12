@@ -30,6 +30,7 @@ func resourceCircleCIContext() *schema.Resource {
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
+				ForceNew:    true,
 				Description: "The name of the context",
 			},
 			"organization": {
