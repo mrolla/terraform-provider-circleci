@@ -71,6 +71,8 @@ func resourceCircleCIContextEnvironmentVariableCreate(d *schema.ResourceData, m 
 		return fmt.Errorf("error storing environment variable: %w", err)
 	}
 
+	d.SetId(variable)
+
 	return resourceCircleCIContextEnvironmentVariableRead(d, m)
 }
 
