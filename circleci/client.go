@@ -44,7 +44,12 @@ func NewClient(config Config) (*Client, error) {
 			BaseURL: restURL,
 			Token:   config.Token,
 		},
-		graphql: graphqlclient.NewClient(graphqlURL.Host, graphqlURL.Path, config.Token, false),
+		graphql: graphqlclient.NewClient(
+			fmt.Sprintf("%s://%s", graphqlURL.Scheme, graphqlURL.Host),
+			graphqlURL.Path,
+			config.Token,
+			false,
+		),
 
 		vcs:          config.VCS,
 		organization: config.Organization,
