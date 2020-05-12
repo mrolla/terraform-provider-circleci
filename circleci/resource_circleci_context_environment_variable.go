@@ -75,26 +75,6 @@ func resourceCircleCIContextEnvironmentVariableCreate(d *schema.ResourceData, m 
 }
 
 func resourceCircleCIContextEnvironmentVariableRead(d *schema.ResourceData, m interface{}) error {
-	client := m.(*Client)
-
-	org, err := client.Organization(d.Get("organization").(string))
-	if err != nil {
-		return err
-	}
-
-	ctx, err := GetContextByID(client.graphql, org, client.vcs, d.Get("context_id").(string))
-	if err != nil {
-		return err
-	}
-
-	for _, env := range ctx.Resources {
-		if env.Variable == d.Id() {
-			d.Set("variable", env.Variable)
-			return nil
-		}
-	}
-
-	d.SetId("")
 	return nil
 }
 
