@@ -3,6 +3,7 @@ package circleci
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/CircleCI-Public/circleci-cli/api"
@@ -17,7 +18,7 @@ func resourceCircleCIContext() *schema.Resource {
 		Delete: resourceCircleCIContextDelete,
 		Exists: resourceCircleCIContextExists,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			State: resourceCircleCIContextImport,
 		},
 
 		Timeouts: &schema.ResourceTimeout{
@@ -118,4 +119,24 @@ func resourceCircleCIContextExists(d *schema.ResourceData, m interface{}) (bool,
 	}
 
 	return true, nil
+}
+
+func resourceCircleCIContextImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	client := m.(*Client)
+
+	parts := strings.Split(d.Id(), "/")
+	if len(parts) != 2 {
+		return nil, errors.New("importing context requires $organization/$context")
+	}
+
+	d.Set("organization", parts[0])
+
+	ctx, err := GetContextByIDOrName(client.graphql, parts[0], client.vcs, parts[1])
+	if err != nil {
+		return nil, err
+	}
+	d.Set("name", ctx.Name)
+	d.SetId(ctx.ID)
+
+	return []*schema.ResourceData{d}, nil
 }

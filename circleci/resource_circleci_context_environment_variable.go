@@ -3,6 +3,8 @@ package circleci
 import (
 	"errors"
 	"fmt"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/CircleCI-Public/circleci-cli/api"
@@ -17,7 +19,7 @@ func resourceCircleCIContextEnvironmentVariable() *schema.Resource {
 		Delete: resourceCircleCIContextEnvironmentVariableDelete,
 		Exists: resourceCircleCIContextEnvironmentVariableExists,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			State: resourceCircleCIContextEnvironmentVariableImport,
 		},
 
 		Timeouts: &schema.ResourceTimeout{
@@ -48,6 +50,12 @@ func resourceCircleCIContextEnvironmentVariable() *schema.Resource {
 				ForceNew:    true,
 				Description: "The ID of the context where the environment variable is defined",
 			},
+			"organization": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "The organization where the context is defined",
+			},
 		},
 	}
 }
@@ -68,7 +76,6 @@ func resourceCircleCIContextEnvironmentVariableCreate(d *schema.ResourceData, m 
 
 func resourceCircleCIContextEnvironmentVariableRead(d *schema.ResourceData, m interface{}) error {
 	client := m.(*Client)
-	variable := d.Get("variable").(string)
 
 	org, err := client.Organization(d.Get("organization").(string))
 	if err != nil {
@@ -91,8 +98,8 @@ func resourceCircleCIContextEnvironmentVariableRead(d *schema.ResourceData, m in
 	}
 
 	for _, env := range ctx.Resources {
-		if env.Variable == variable {
-			d.SetId(env.Variable)
+		if env.Variable == d.Id() {
+			d.Set("variable", env.Variable)
 			return nil
 		}
 	}
@@ -141,4 +148,30 @@ func resourceCircleCIContextEnvironmentVariableExists(d *schema.ResourceData, m 
 	}
 
 	return false, nil
+}
+
+func resourceCircleCIContextEnvironmentVariableImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	client := m.(*Client)
+
+	value := os.Getenv("CIRCLECI_ENV_VALUE")
+	if value == "" {
+		return nil, errors.New("CIRCLECI_ENV_VALUE is required to import a context environment variable")
+	}
+
+	parts := strings.Split(d.Id(), "/")
+	if len(parts) != 3 {
+		return nil, errors.New("importing context environtment variables requires $organization/$context/$variable")
+	}
+
+	d.Set("organization", parts[0])
+	d.Set("variable", parts[2])
+	d.SetId(parts[2])
+
+	ctx, err := GetContextByIDOrName(client.graphql, parts[0], client.vcs, parts[1])
+	if err != nil {
+		return nil, err
+	}
+	d.Set("context_id", ctx.ID)
+
+	return []*schema.ResourceData{d}, nil
 }
