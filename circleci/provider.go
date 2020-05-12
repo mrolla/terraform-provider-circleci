@@ -44,6 +44,9 @@ func Provider() terraform.ResourceProvider {
 			"circleci_context":                      resourceCircleCIContext(),
 			"circleci_context_environment_variable": resourceCircleCIContextEnvironmentVariable(),
 		},
+		DataSourcesMap: map[string]*schema.Resource{
+			"circleci_context": dataSourceCircleCIContext(),
+		},
 		ConfigureFunc: providerConfigure,
 	}
 }
