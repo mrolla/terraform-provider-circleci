@@ -57,6 +57,12 @@ func resourceCircleCIContextCreate(d *schema.ResourceData, m interface{}) error 
 		return fmt.Errorf("error creating context: %w", err)
 	}
 
+	ctx, err := GetContextByName(client.graphql, org, client.vcs, name)
+	if err != nil {
+		return err
+	}
+	d.SetId(ctx.ID)
+
 	return resourceCircleCIContextRead(d, m)
 }
 
