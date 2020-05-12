@@ -45,7 +45,9 @@ func NewClient(config Config) (*Client, error) {
 			Token:   config.Token,
 		},
 		graphql: graphqlclient.NewClient(graphqlURL.Host, graphqlURL.Path, config.Token, false),
-		vcs:     config.VCS,
+
+		vcs:          config.VCS,
+		organization: config.Organization,
 	}, nil
 }
 
