@@ -1,6 +1,7 @@
 package circleci
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 
@@ -46,6 +47,21 @@ func NewClient(config Config) (*Client, error) {
 		graphql: graphqlclient.NewClient(graphqlURL.Host, graphqlURL.Path, config.Token, false),
 		vcs:     config.VCS,
 	}, nil
+}
+
+// Organization returns the organization for a request. If an organization is provided,
+// that is returned. Next, an organization configured in the provider is returned.
+// If neither are set, an error is returned.
+func (c *Client) Organization(org string) (string, error) {
+	if org != "" {
+		return org, nil
+	}
+
+	if c.organization != "" {
+		return c.organization, nil
+	}
+
+	return "", errors.New("organization is required")
 }
 
 // GetEnvVar get the environment variable with given name
