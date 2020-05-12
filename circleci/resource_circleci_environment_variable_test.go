@@ -3,10 +3,11 @@ package circleci
 import (
 	"errors"
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"regexp"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
@@ -264,7 +265,13 @@ func TestCircleCIEnvironmentVariableResourceOrgStateUpgradeV0(t *testing.T) {
 	project := os.Getenv("CIRCLECI_PROJECT")
 	envName := "TEST_" + acctest.RandString(8)
 	organization := os.Getenv("TEST_CIRCLECI_ORGANIZATION")
-	providerClient, _ := NewConfig("foo", os.Getenv("CIRCLECI_VCS_TYPE"), "http://example.com")
+
+	providerClient, _ := NewClient(Config{
+		URL:   "http://example.com",
+		Token: "foo",
+		VCS:   os.Getenv("CIRCLECI_VCS_TYPE"),
+	})
+
 	actual, err := resourceCircleCIEnvironmentVariableUpgradeV0(testCircleCIEnvironmentVariableResourceOrgStateDataV0(organization, project, envName), providerClient)
 	if err != nil {
 		t.Fatalf("error migrating state: %s", err)
@@ -278,7 +285,13 @@ func TestCircleCIEnvironmentVariableProviderOrgStateUpgradeV0(t *testing.T) {
 	project := os.Getenv("CIRCLECI_PROJECT")
 	envName := "TEST_" + acctest.RandString(8)
 	organization := os.Getenv("TEST_CIRCLECI_ORGANIZATION")
-	providerClient, _ := NewOrganizationConfig("foo", os.Getenv("CIRCLECI_VCS_TYPE"), os.Getenv("TEST_CIRCLECI_ORGANIZATION"), "http://example.com")
+
+	providerClient, _ := NewClient(Config{
+		URL:          "http://example.com",
+		Token:        "foo",
+		VCS:          os.Getenv("CIRCLECI_VCS_TYPE"),
+		Organization: os.Getenv("TEST_CIRCLECI_ORGANIZATION"),
+	})
 
 	actual, err := resourceCircleCIEnvironmentVariableUpgradeV0(testCircleCIEnvironmentVariableNoOrgStateDataProviderOrgV0(project, envName), providerClient)
 	if err != nil {
@@ -290,16 +303,16 @@ func TestCircleCIEnvironmentVariableProviderOrgStateUpgradeV0(t *testing.T) {
 }
 
 func testAccCircleCIEnvironmentVariableResourceOrgCheckDestroy(s *terraform.State) error {
-	providerClient := testAccNoOrgProvider.Meta().(*ProviderClient)
+	providerClient := testAccNoOrgProvider.Meta().(*Client)
 	return testAccCircleCIEnvironmentVariableCheckDestroy(providerClient, s)
 }
 
 func testAccCircleCIEnvironmentVariableProviderOrgCheckDestroy(s *terraform.State) error {
-	providerClient := testAccOrgProvider.Meta().(*ProviderClient)
+	providerClient := testAccOrgProvider.Meta().(*Client)
 	return testAccCircleCIEnvironmentVariableCheckDestroy(providerClient, s)
 }
 
-func testAccCircleCIEnvironmentVariableCheckDestroy(providerClient *ProviderClient, s *terraform.State) error {
+func testAccCircleCIEnvironmentVariableCheckDestroy(providerClient *Client, s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "circleci_environment_variable" {
 			continue

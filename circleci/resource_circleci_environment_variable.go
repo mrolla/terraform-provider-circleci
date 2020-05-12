@@ -137,7 +137,7 @@ func resourceCircleCIEnvironmentVariableUpgradeV0(rawState map[string]interface{
 	if rawOrg != nil && rawOrg.(string) != "" {
 		organization = rawState["organization"].(string)
 	} else {
-		providerClient := meta.(*ProviderClient)
+		providerClient := meta.(*Client)
 		organization = providerClient.organization
 	}
 
@@ -154,7 +154,7 @@ func hashString(str string) string {
 }
 
 func resourceCircleCIEnvironmentVariableCreate(d *schema.ResourceData, m interface{}) error {
-	providerClient := m.(*ProviderClient)
+	providerClient := m.(*Client)
 
 	organization := getOrganization(d, providerClient)
 	projectName := d.Get("project").(string)
@@ -179,7 +179,7 @@ func resourceCircleCIEnvironmentVariableCreate(d *schema.ResourceData, m interfa
 }
 
 func resourceCircleCIEnvironmentVariableRead(d *schema.ResourceData, m interface{}) error {
-	providerClient := m.(*ProviderClient)
+	providerClient := m.(*Client)
 
 	// If we don't have a project name we're doing an import. Parse it from the ID.
 	if _, ok := d.GetOk("name"); !ok {
@@ -207,7 +207,7 @@ func resourceCircleCIEnvironmentVariableRead(d *schema.ResourceData, m interface
 }
 
 func resourceCircleCIEnvironmentVariableDelete(d *schema.ResourceData, m interface{}) error {
-	providerClient := m.(*ProviderClient)
+	providerClient := m.(*Client)
 
 	organization := getOrganization(d, providerClient)
 	projectName := d.Get("project").(string)
@@ -224,7 +224,7 @@ func resourceCircleCIEnvironmentVariableDelete(d *schema.ResourceData, m interfa
 }
 
 func resourceCircleCIEnvironmentVariableExists(d *schema.ResourceData, m interface{}) (bool, error) {
-	providerClient := m.(*ProviderClient)
+	providerClient := m.(*Client)
 
 	// If we don't have a project name we're doing an import. Parse it from the ID.
 	if _, ok := d.GetOk("name"); !ok {
@@ -245,7 +245,7 @@ func resourceCircleCIEnvironmentVariableExists(d *schema.ResourceData, m interfa
 	return bool(envVar.Value != ""), nil
 }
 
-func getOrganization(d *schema.ResourceData, providerClient *ProviderClient) string {
+func getOrganization(d *schema.ResourceData, providerClient *Client) string {
 	organization, ok := d.GetOk("organization")
 	if ok {
 		org := organization.(string)
