@@ -68,18 +68,8 @@ func resourceCircleCIContextRead(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
-	ctx, err := GetContextByID(
-		client.graphql,
-		org,
-		client.vcs,
-		d.Id(),
-	)
+	ctx, err := GetContextByID(client.graphql, org, client.vcs, d.Id())
 	if err != nil {
-		if errors.Is(err, ErrContextNotFound) {
-			d.SetId("")
-			return nil
-		}
-
 		return err
 	}
 
