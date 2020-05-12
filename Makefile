@@ -1,4 +1,4 @@
-
+TEST?=$$(go list ./... |grep -v 'vendor')
 VERSION=v0.0.1
 ARCH=amd64
 OS=linux
@@ -10,6 +10,9 @@ TERRAFORM_PLUGIN_DIR=$(HOME)/.terraform.d/plugins/$(OS)_$(ARCH)/
 .PHONY: $(TARGET_BINARY)
 
 build: $(TARGET_BINARY)
+
+testacc:
+	TF_ACC=1 go test $(TEST) -v $(TESTARGS) -timeout 15m
 
 $(TARGET_BINARY):
 	CGO_ENABLED=0 GOOS=$(OS) GOARCH=$(ARCH) go build -ldflags="-s -w" -a -o $(TARGET_BINARY)
