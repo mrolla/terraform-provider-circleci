@@ -1,9 +1,7 @@
 package circleci
 
 import (
-	"fmt"
-
-	"github.com/CircleCI-Public/circleci-cli/api"
+	"errors"
 
 	"github.com/hashicorp/terraform/helper/schema"
 )
@@ -36,18 +34,21 @@ func dataSourceCircleCIContextRead(d *schema.ResourceData, m interface{}) error 
 		return err
 	}
 
-	res, err := api.ListContexts(client.graphql, org, client.vcs)
+	ctx, err := GetContextByName(
+		client.graphql,
+		org,
+		client.vcs,
+		d.Get("name").(string),
+	)
 	if err != nil {
-		return fmt.Errorf("error listing contexts: %v", err)
-	}
-
-	for _, context := range res.Organization.Contexts.Edges {
-		if context.Node.Name == d.Get("name").(string) {
-			d.SetId(context.Node.ID)
+		if errors.Is(err, ErrContextNotFound) {
+			d.SetId("")
 			return nil
 		}
+
+		return err
 	}
 
-	d.SetId("")
+	d.SetId(ctx.ID)
 	return nil
 }

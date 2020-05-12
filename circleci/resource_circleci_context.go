@@ -1,6 +1,7 @@
 package circleci
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -51,7 +52,7 @@ func resourceCircleCIContextCreate(d *schema.ResourceData, m interface{}) error 
 	}
 
 	if err := api.CreateContext(client.graphql, client.vcs, org, name); err != nil {
-		return fmt.Errorf("error creating context: %v", err)
+		return fmt.Errorf("error creating context: %w", err)
 	}
 
 	return resourceCircleCIContextRead(d, m)
@@ -65,19 +66,22 @@ func resourceCircleCIContextRead(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
-	res, err := api.ListContexts(client.graphql, org, client.vcs)
+	ctx, err := GetContextByID(
+		client.graphql,
+		org,
+		client.vcs,
+		d.Id(),
+	)
 	if err != nil {
-		return fmt.Errorf("error listing contexts: %v", err)
-	}
-
-	for _, context := range res.Organization.Contexts.Edges {
-		if context.Node.ID == d.Id() {
-			d.Set("name", context.Node.Name)
+		if errors.Is(err, ErrContextNotFound) {
+			d.SetId("")
 			return nil
 		}
+
+		return err
 	}
 
-	d.SetId("")
+	d.Set("name", ctx.Name)
 	return nil
 }
 
@@ -85,7 +89,7 @@ func resourceCircleCIContextDelete(d *schema.ResourceData, m interface{}) error 
 	client := m.(*Client)
 
 	if err := api.DeleteContext(client.graphql, d.Id()); err != nil {
-		return fmt.Errorf("error deleting context: %v", err)
+		return fmt.Errorf("error deleting context: %w", err)
 	}
 
 	return nil
@@ -93,23 +97,25 @@ func resourceCircleCIContextDelete(d *schema.ResourceData, m interface{}) error 
 
 func resourceCircleCIContextExists(d *schema.ResourceData, m interface{}) (bool, error) {
 	client := m.(*Client)
-	name := d.Get("name").(string)
 
 	org, err := client.Organization(d.Get("organization").(string))
 	if err != nil {
 		return false, err
 	}
 
-	res, err := api.ListContexts(client.graphql, org, client.vcs)
+	_, err = GetContextByID(
+		client.graphql,
+		org,
+		client.vcs,
+		d.Id(),
+	)
 	if err != nil {
-		return false, fmt.Errorf("error listing contexts: %v", err)
-	}
-
-	for _, context := range res.Organization.Contexts.Edges {
-		if context.Node.Name == name {
-			return true, nil
+		if errors.Is(err, ErrContextNotFound) {
+			return false, nil
 		}
+
+		return false, err
 	}
 
-	return false, nil
+	return true, nil
 }

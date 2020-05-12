@@ -73,7 +73,7 @@ func resourceCircleCIContextEnvironmentVariableCreate(d *schema.ResourceData, m 
 	}
 
 	if err := api.StoreEnvironmentVariable(client.graphql, context, variable, value); err != nil {
-		return fmt.Errorf("error storing environment variable: %v", err)
+		return fmt.Errorf("error storing environment variable: %w", err)
 	}
 
 	return resourceCircleCIContextEnvironmentVariableRead(d, m)
@@ -88,19 +88,25 @@ func resourceCircleCIContextEnvironmentVariableRead(d *schema.ResourceData, m in
 		return err
 	}
 
-	res, err := api.ListContexts(client.graphql, org, client.vcs)
+	ctx, err := GetContextByID(
+		client.graphql,
+		org,
+		client.vcs,
+		d.Get("context_id").(string),
+	)
 	if err != nil {
-		return fmt.Errorf("error listing contexts: %v", err)
+		if errors.Is(err, ErrContextNotFound) {
+			d.SetId("")
+			return nil
+		}
+
+		return err
 	}
 
-	for _, context := range res.Organization.Contexts.Edges {
-		if context.Node.ID == d.Id() {
-			for _, env := range context.Node.Resources {
-				if env.Variable == variable {
-					d.SetId(env.Variable)
-					return nil
-				}
-			}
+	for _, env := range ctx.Resources {
+		if env.Variable == variable {
+			d.SetId(env.Variable)
+			return nil
 		}
 	}
 
@@ -112,7 +118,7 @@ func resourceCircleCIContextEnvironmentVariableDelete(d *schema.ResourceData, m 
 	client := m.(*Client)
 
 	if err := api.DeleteEnvironmentVariable(client.graphql, d.Get("context_id").(string), d.Id()); err != nil {
-		return fmt.Errorf("error deleting environment variable: %v", err)
+		return fmt.Errorf("error deleting environment variable: %w", err)
 	}
 
 	return nil
@@ -127,18 +133,23 @@ func resourceCircleCIContextEnvironmentVariableExists(d *schema.ResourceData, m 
 		return false, err
 	}
 
-	res, err := api.ListContexts(client.graphql, org, client.vcs)
+	ctx, err := GetContextByID(
+		client.graphql,
+		org,
+		client.vcs,
+		d.Get("context_id").(string),
+	)
 	if err != nil {
-		return false, fmt.Errorf("error listing contexts: %v", err)
+		if errors.Is(err, ErrContextNotFound) {
+			return false, nil
+		}
+
+		return false, err
 	}
 
-	for _, context := range res.Organization.Contexts.Edges {
-		if context.Node.ID == d.Id() {
-			for _, env := range context.Node.Resources {
-				if env.Variable == variable {
-					return true, nil
-				}
-			}
+	for _, env := range ctx.Resources {
+		if env.Variable == variable {
+			return true, nil
 		}
 	}
 
