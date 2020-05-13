@@ -126,13 +126,10 @@ func resourceCircleCIContextImport(d *schema.ResourceData, m interface{}) ([]*sc
 		return nil, errors.New("importing context requires $organization/$context")
 	}
 
-	d.Set("organization", parts[0])
-
 	ctx, err := GetContextByIDOrName(client.graphql, parts[0], client.vcs, parts[1])
 	if err != nil {
 		return nil, err
 	}
-	d.Set("name", ctx.Name)
 	d.SetId(ctx.ID)
 
 	return []*schema.ResourceData{d}, nil

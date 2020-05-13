@@ -57,6 +57,60 @@ func TestAccCircleCIContext_update(t *testing.T) {
 	})
 }
 
+func TestAccCircleCIContext_import(t *testing.T) {
+	context := &api.CircleCIContext{}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccOrgProviders,
+		CheckDestroy: testAccCheckCircleCIContextDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCircleCIContext_basic,
+				Check:  testAccCheckCircleCIContextExists("circleci_context.foo", context),
+			},
+			{
+				ResourceName: "circleci_context.foo",
+				ImportStateIdFunc: func(s *terraform.State) (string, error) {
+					return fmt.Sprintf(
+						"%s/%s",
+						testAccOrgProvider.Meta().(*Client).organization,
+						context.ID,
+					), nil
+				},
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccCircleCIContext_import_name(t *testing.T) {
+	context := &api.CircleCIContext{}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccOrgProviders,
+		CheckDestroy: testAccCheckCircleCIContextDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCircleCIContext_basic,
+				Check:  testAccCheckCircleCIContextExists("circleci_context.foo", context),
+			},
+			{
+				ResourceName: "circleci_context.foo",
+				ImportStateId: fmt.Sprintf(
+					"%s/%s",
+					testAccOrgProvider.Meta().(*Client).organization,
+					"terraform-test",
+				),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
 func testAccCheckCircleCIContextExists(addr string, context *api.CircleCIContext) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		client := testAccOrgProvider.Meta().(*Client)
