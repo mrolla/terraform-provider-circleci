@@ -11,6 +11,8 @@ description: |-
 A CircleCI context is a named collection of environment variables that can be referenced in the configuration for workflows.
 Each environment variable is represented by a separate Terraform resource.
 
+~> **NOTE:** This resource uses the CircleCI GraphQL API, which is not officially supported.
+
 ## Example Usage
 
 Basic usage:

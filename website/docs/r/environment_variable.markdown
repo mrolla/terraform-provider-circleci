@@ -8,18 +8,13 @@ description: |-
 
 # circleci_environment_variable
 
-A CircleCI context is a named collection of environment variables that can be referenced in the configuration for workflows.
-Each environment variable is represented by a separate Terraform resource.
+A CircleCI environment variable is a key value pair added to a project that will be exposed to jobs.
 
 ## Example Usage
 
 Basic usage:
 
 ```hcl
-resource "circleci_context" "build" {
-  name  = "build"
-}
-
 resource "circleci_environment_variable" "token" {
   name    = "TOKEN"
   value   = "secret"
