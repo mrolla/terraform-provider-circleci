@@ -16,14 +16,13 @@
 ## Using the provider
 
 #### Download a release
+
 Download the latest release for your OS from the [release page][release page]
 and follow the instructions to [install third party plugins][third party plugins].
 
 #### Build from sources
-To build the project you can use `make all` which will:
-- run the tests (`make test`)
-- build the binary (`make build`)
-- copy the binary to the [Terraform plugin directory][third party plugins] (`make install_plugin_locally`)
+
+To build the project you can use `make`. This will place a binary in your `$GOBIN` directory. Copy the binary to the [Terraform plugin directory][third party plugins].
 
 After placing it into your plugins directory, run `terraform init` to initialize it.
 
