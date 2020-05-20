@@ -9,7 +9,7 @@ import (
 
 	"github.com/CircleCI-Public/circleci-cli/api"
 
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
 func resourceCircleCIContextEnvironmentVariable() *schema.Resource {
