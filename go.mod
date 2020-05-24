@@ -3,6 +3,7 @@ module github.com/mrolla/terraform-provider-circleci
 go 1.12
 
 require (
+	github.com/CircleCI-Public/circleci-cli v0.1.7645
 	github.com/hashicorp/terraform-plugin-sdk v1.7.0
 	github.com/jszwedko/go-circleci v0.2.0
 	github.com/stretchr/testify v1.3.0

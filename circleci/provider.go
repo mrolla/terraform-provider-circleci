@@ -32,22 +32,31 @@ func Provider() terraform.ResourceProvider {
 				DefaultFunc: schema.EnvDefaultFunc("CIRCLECI_URL", "https://circleci.com/api/v1.1/"),
 				Description: "The URL of the Circle CI API.",
 			},
+			"graphql_url": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("CIRCLECI_GRAPHQL_URL", "https://circleci.com/graphql-unstable"),
+				Description: "The URL of the CircleCI GraphQL API",
+			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"circleci_environment_variable": resourceCircleCIEnvironmentVariable(),
+			"circleci_environment_variable":         resourceCircleCIEnvironmentVariable(),
+			"circleci_context":                      resourceCircleCIContext(),
+			"circleci_context_environment_variable": resourceCircleCIContextEnvironmentVariable(),
+		},
+		DataSourcesMap: map[string]*schema.Resource{
+			"circleci_context": dataSourceCircleCIContext(),
 		},
 		ConfigureFunc: providerConfigure,
 	}
 }
 
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {
-	token := d.Get("api_token").(string)
-	vcsType := d.Get("vcs_type").(string)
-	url := d.Get("url").(string)
-
-	if organization, ok := d.GetOk("organization"); ok {
-		return NewOrganizationConfig(token, vcsType, organization.(string), url)
-	}
-
-	return NewConfig(token, vcsType, url)
+	return NewClient(Config{
+		URL:          d.Get("url").(string),
+		GraphqlURL:   d.Get("graphql_url").(string),
+		Token:        d.Get("api_token").(string),
+		Organization: d.Get("organization").(string),
+		VCS:          d.Get("vcs_type").(string),
+	})
 }
