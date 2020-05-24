@@ -1,6 +1,6 @@
 module github.com/mrolla/terraform-provider-circleci
 
-go 1.12
+go 1.14
 
 require (
 	github.com/CircleCI-Public/circleci-cli v0.1.7645

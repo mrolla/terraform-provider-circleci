@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: golang:1.12.1
+      - image: golang:1.14.3
     working_directory: /terraform-provider-circleci
     steps:
       - checkout
@@ -33,7 +33,7 @@ jobs:
   release:
     working_directory: /build
     docker:
-      - image: golang:1.12.1
+      - image: golang:1.14.3
     steps:
       - attach_workspace:
           at: /
