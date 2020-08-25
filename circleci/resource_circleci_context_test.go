@@ -99,11 +99,13 @@ func TestAccCircleCIContext_import_name(t *testing.T) {
 			},
 			{
 				ResourceName: "circleci_context.foo",
-				ImportStateId: fmt.Sprintf(
-					"%s/%s",
-					testAccOrgProvider.Meta().(*Client).organization,
-					"terraform-test",
-				),
+				ImportStateIdFunc: func(s *terraform.State) (string, error) {
+					return fmt.Sprintf(
+						"%s/%s",
+						testAccOrgProvider.Meta().(*Client).organization,
+						"terraform-test",
+				    ), nil
+				},
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
