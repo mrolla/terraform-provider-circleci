@@ -120,12 +120,14 @@ func TestAccCircleCIContextEnvironmentVariable_import_name(t *testing.T) {
 			},
 			{
 				ResourceName: "circleci_context_environment_variable.foo",
-				ImportStateId: fmt.Sprintf(
+				ImportStateIdFunc: func(s *terraform.State) (string, error) {
+                    return fmt.Sprintf(
 					"%s/%s/%s",
 					testAccOrgProvider.Meta().(*Client).organization,
 					"terraform-test",
 					"VAR",
-				),
+				    ), nil
+                },
 				PreConfig: func() {
 					os.Setenv("CIRCLECI_ENV_VALUE", "secret-value")
 				},
