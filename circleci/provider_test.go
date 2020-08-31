@@ -1,11 +1,15 @@
 package circleci
 
 import (
+	"net/url"
 	"os"
 	"testing"
 
+	"github.com/ZymoticB/terraform-provider-circleci/internal/client"
+
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"go.uber.org/zap"
 )
 
 var testAccNoOrgProvider *schema.Provider
@@ -47,5 +51,34 @@ func testAccPreCheck(t *testing.T) {
 
 	if v := os.Getenv("TEST_CIRCLECI_ORGANIZATION"); v == "" {
 		t.Fatal("TEST_CIRCLECI_ORGANIZATION must be set for acceptance tests")
+	}
+}
+
+func testContext(organization string) ProviderContext {
+	baseURL, err := url.Parse(_testBaseURL)
+	if err != nil {
+		panic(err)
+	}
+
+	logCfg := zap.NewDevelopmentConfig()
+	logCfg.OutputPaths = []string{
+		"/tmp/test.txt",
+	}
+	logger, _ := logCfg.Build()
+
+	logger.Error("test")
+
+	providerClient := client.NewClient(
+		zap.NewNop(),
+		_testCCIToken,
+		_testHTTPClient,
+		client.WithBaseURL(baseURL),
+	)
+
+	return ProviderContext{
+		Client: providerClient,
+		VCS:    "github",
+		Org:    organization,
+		Logger: logger,
 	}
 }

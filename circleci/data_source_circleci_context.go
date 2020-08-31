@@ -3,6 +3,8 @@ package circleci
 import (
 	"errors"
 
+	"github.com/ZymoticB/terraform-provider-circleci/internal/client"
+
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
@@ -26,22 +28,22 @@ func dataSourceCircleCIContext() *schema.Resource {
 	}
 }
 
-func dataSourceCircleCIContextRead(d *schema.ResourceData, m interface{}) error {
-	client := m.(*Client)
+func dataSourceCircleCIContextRead(d *schema.ResourceData, meta interface{}) error {
+	providerContext := meta.(ProviderContext)
 
-	org, err := client.Organization(d.Get("organization").(string))
-	if err != nil {
-		return err
+	org := getOrganization(d, providerContext)
+	if org == "" {
+		return errors.New("organization is required")
 	}
 
-	ctx, err := GetContextByName(
-		client.graphql,
+	ctx, err := client.GetContextByName(
+		providerContext.GraphQLClient,
 		org,
-		client.vcs,
+		providerContext.VCS,
 		d.Get("name").(string),
 	)
 	if err != nil {
-		if errors.Is(err, ErrContextNotFound) {
+		if errors.Is(err, client.ErrContextNotFound) {
 			d.SetId("")
 			return nil
 		}

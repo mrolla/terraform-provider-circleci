@@ -1,8 +1,16 @@
 package circleci
 
 import (
+	"net/http"
+	"net/url"
+	"os"
+
+	"github.com/ZymoticB/terraform-provider-circleci/internal/client"
+
+	cciclient "github.com/CircleCI-Public/circleci-cli/client"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"go.uber.org/zap"
 )
 
 func Provider() terraform.ResourceProvider {
@@ -51,12 +59,60 @@ func Provider() terraform.ResourceProvider {
 	}
 }
 
+type ProviderContext struct {
+	Client        *client.Client
+	VCS           string
+	Org           string
+	GraphQLClient *cciclient.Client
+	Logger        *zap.Logger
+}
+
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {
-	return NewClient(Config{
-		URL:          d.Get("url").(string),
-		GraphqlURL:   d.Get("graphql_url").(string),
-		Token:        d.Get("api_token").(string),
-		Organization: d.Get("organization").(string),
-		VCS:          d.Get("vcs_type").(string),
-	})
+	ctx := ProviderContext{
+		Org: d.Get("organization").(string),
+		VCS: d.Get("vcs_type").(string),
+	}
+	token := d.Get("api_token").(string)
+	baseURL := d.Get("url").(string)
+	graphqlURL := d.Get("graphql_url").(string)
+
+	graphqlParsedURL, err := url.Parse(graphqlURL)
+	if err != nil {
+		return nil, err
+	}
+
+	parsedBaseURL, err := url.Parse(baseURL)
+	if err != nil {
+		return nil, err
+	}
+
+	logConfig := zap.NewProductionConfig()
+	tfAccDebug := os.Getenv("TF_ACC_DEBUG")
+	if tfAccDebug != "" {
+		logConfig = zap.NewDevelopmentConfig()
+	}
+
+	logger, err := logConfig.Build()
+	if err != nil {
+		return nil, err
+	}
+	ctx.Logger = logger
+
+	client := client.NewClient(
+		logger,
+		token,
+		http.DefaultClient,
+		client.WithBaseURL(parsedBaseURL),
+	)
+	ctx.Client = client
+
+	graphqlClient := cciclient.NewClient(
+		(&url.URL{Host: graphqlParsedURL.Host, Scheme: graphqlParsedURL.Scheme}).String(),
+		graphqlParsedURL.Path,
+		token,
+		false,
+	)
+	ctx.GraphQLClient = graphqlClient
+
+	return ctx, nil
 }

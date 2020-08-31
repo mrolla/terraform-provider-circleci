@@ -7,8 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/CircleCI-Public/circleci-cli/api"
+	"github.com/ZymoticB/terraform-provider-circleci/internal/client"
 
+	"github.com/CircleCI-Public/circleci-cli/api"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
@@ -60,53 +61,56 @@ func resourceCircleCIContextEnvironmentVariable() *schema.Resource {
 	}
 }
 
-func resourceCircleCIContextEnvironmentVariableCreate(d *schema.ResourceData, m interface{}) error {
-	client := m.(*Client)
+func resourceCircleCIContextEnvironmentVariableCreate(d *schema.ResourceData, meta interface{}) error {
+	providerContext := meta.(ProviderContext)
+	gqlClient := providerContext.GraphQLClient
 
 	variable := d.Get("variable").(string)
 	context := d.Get("context_id").(string)
 	value := d.Get("value").(string)
 
-	if err := api.StoreEnvironmentVariable(client.graphql, context, variable, value); err != nil {
+	if err := api.StoreEnvironmentVariable(gqlClient, context, variable, value); err != nil {
 		return fmt.Errorf("error storing environment variable: %w", err)
 	}
 
 	d.SetId(variable)
 
-	return resourceCircleCIContextEnvironmentVariableRead(d, m)
+	return resourceCircleCIContextEnvironmentVariableRead(d, meta)
 }
 
-func resourceCircleCIContextEnvironmentVariableRead(d *schema.ResourceData, m interface{}) error {
+func resourceCircleCIContextEnvironmentVariableRead(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func resourceCircleCIContextEnvironmentVariableDelete(d *schema.ResourceData, m interface{}) error {
-	client := m.(*Client)
+func resourceCircleCIContextEnvironmentVariableDelete(d *schema.ResourceData, meta interface{}) error {
+	providerContext := meta.(ProviderContext)
+	gqlClient := providerContext.GraphQLClient
 
-	if err := api.DeleteEnvironmentVariable(client.graphql, d.Get("context_id").(string), d.Id()); err != nil {
+	if err := api.DeleteEnvironmentVariable(gqlClient, d.Get("context_id").(string), d.Id()); err != nil {
 		return fmt.Errorf("error deleting environment variable: %w", err)
 	}
 
 	return nil
 }
 
-func resourceCircleCIContextEnvironmentVariableExists(d *schema.ResourceData, m interface{}) (bool, error) {
-	client := m.(*Client)
+func resourceCircleCIContextEnvironmentVariableExists(d *schema.ResourceData, meta interface{}) (bool, error) {
+	providerContext := meta.(ProviderContext)
+	gqlClient := providerContext.GraphQLClient
 	variable := d.Get("variable").(string)
 
-	org, err := client.Organization(d.Get("organization").(string))
-	if err != nil {
-		return false, err
+	org := getOrganization(d, providerContext)
+	if org == "" {
+		return false, errors.New("organization is required")
 	}
 
-	ctx, err := GetContextByID(
-		client.graphql,
+	ctx, err := client.GetContextByID(
+		gqlClient,
 		org,
-		client.vcs,
+		providerContext.VCS,
 		d.Get("context_id").(string),
 	)
 	if err != nil {
-		if errors.Is(err, ErrContextNotFound) {
+		if errors.Is(err, client.ErrContextNotFound) {
 			return false, nil
 		}
 
@@ -122,8 +126,9 @@ func resourceCircleCIContextEnvironmentVariableExists(d *schema.ResourceData, m 
 	return false, nil
 }
 
-func resourceCircleCIContextEnvironmentVariableImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	client := m.(*Client)
+func resourceCircleCIContextEnvironmentVariableImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	providerContext := meta.(ProviderContext)
+	gqlClient := providerContext.GraphQLClient
 
 	value := os.Getenv("CIRCLECI_ENV_VALUE")
 	if value == "" {
@@ -139,7 +144,7 @@ func resourceCircleCIContextEnvironmentVariableImport(d *schema.ResourceData, m 
 	d.Set("variable", parts[2])
 	d.SetId(parts[2])
 
-	ctx, err := GetContextByIDOrName(client.graphql, parts[0], client.vcs, parts[1])
+	ctx, err := client.GetContextByIDOrName(gqlClient, parts[0], providerContext.VCS, parts[1])
 	if err != nil {
 		return nil, err
 	}

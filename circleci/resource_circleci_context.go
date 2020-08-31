@@ -6,8 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/CircleCI-Public/circleci-cli/api"
+	"github.com/ZymoticB/terraform-provider-circleci/internal/client"
 
+	"github.com/CircleCI-Public/circleci-cli/api"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
@@ -43,38 +44,40 @@ func resourceCircleCIContext() *schema.Resource {
 	}
 }
 
-func resourceCircleCIContextCreate(d *schema.ResourceData, m interface{}) error {
-	client := m.(*Client)
+func resourceCircleCIContextCreate(d *schema.ResourceData, meta interface{}) error {
+	providerContext := meta.(ProviderContext)
+	gqlClient := providerContext.GraphQLClient
 
 	name := d.Get("name").(string)
 
-	org, err := client.Organization(d.Get("organization").(string))
-	if err != nil {
-		return err
+	org := getOrganization(d, providerContext)
+	if org == "" {
+		return errors.New("organization is required")
 	}
 
-	if err := api.CreateContext(client.graphql, client.vcs, org, name); err != nil {
+	if err := api.CreateContext(gqlClient, providerContext.VCS, org, name); err != nil {
 		return fmt.Errorf("error creating context: %w", err)
 	}
 
-	ctx, err := GetContextByName(client.graphql, org, client.vcs, name)
+	ctx, err := client.GetContextByName(gqlClient, org, providerContext.VCS, name)
 	if err != nil {
 		return err
 	}
 	d.SetId(ctx.ID)
 
-	return resourceCircleCIContextRead(d, m)
+	return resourceCircleCIContextRead(d, meta)
 }
 
-func resourceCircleCIContextRead(d *schema.ResourceData, m interface{}) error {
-	client := m.(*Client)
+func resourceCircleCIContextRead(d *schema.ResourceData, meta interface{}) error {
+	providerContext := meta.(ProviderContext)
+	gqlClient := providerContext.GraphQLClient
 
-	org, err := client.Organization(d.Get("organization").(string))
-	if err != nil {
-		return err
+	org := getOrganization(d, providerContext)
+	if org == "" {
+		return errors.New("organization is required")
 	}
 
-	ctx, err := GetContextByID(client.graphql, org, client.vcs, d.Id())
+	ctx, err := client.GetContextByID(gqlClient, org, providerContext.VCS, d.Id())
 	if err != nil {
 		return err
 	}
@@ -83,32 +86,34 @@ func resourceCircleCIContextRead(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
-func resourceCircleCIContextDelete(d *schema.ResourceData, m interface{}) error {
-	client := m.(*Client)
+func resourceCircleCIContextDelete(d *schema.ResourceData, meta interface{}) error {
+	providerContext := meta.(ProviderContext)
+	gqlClient := providerContext.GraphQLClient
 
-	if err := api.DeleteContext(client.graphql, d.Id()); err != nil {
+	if err := api.DeleteContext(gqlClient, d.Id()); err != nil {
 		return fmt.Errorf("error deleting context: %w", err)
 	}
 
 	return nil
 }
 
-func resourceCircleCIContextExists(d *schema.ResourceData, m interface{}) (bool, error) {
-	client := m.(*Client)
+func resourceCircleCIContextExists(d *schema.ResourceData, meta interface{}) (bool, error) {
+	providerContext := meta.(ProviderContext)
+	gqlClient := providerContext.GraphQLClient
 
-	org, err := client.Organization(d.Get("organization").(string))
-	if err != nil {
-		return false, err
+	org := getOrganization(d, providerContext)
+	if org == "" {
+		return false, errors.New("organization is required")
 	}
 
-	_, err = GetContextByID(
-		client.graphql,
+	_, err := client.GetContextByID(
+		gqlClient,
 		org,
-		client.vcs,
+		providerContext.VCS,
 		d.Id(),
 	)
 	if err != nil {
-		if errors.Is(err, ErrContextNotFound) {
+		if errors.Is(err, client.ErrContextNotFound) {
 			return false, nil
 		}
 
@@ -118,15 +123,16 @@ func resourceCircleCIContextExists(d *schema.ResourceData, m interface{}) (bool,
 	return true, nil
 }
 
-func resourceCircleCIContextImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	client := m.(*Client)
+func resourceCircleCIContextImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	providerContext := meta.(ProviderContext)
+	gqlClient := providerContext.GraphQLClient
 
 	parts := strings.Split(d.Id(), "/")
 	if len(parts) != 2 {
 		return nil, errors.New("importing context requires $organization/$context")
 	}
 
-	ctx, err := GetContextByIDOrName(client.graphql, parts[0], client.vcs, parts[1])
+	ctx, err := client.GetContextByIDOrName(gqlClient, parts[0], providerContext.VCS, parts[1])
 	if err != nil {
 		return nil, err
 	}

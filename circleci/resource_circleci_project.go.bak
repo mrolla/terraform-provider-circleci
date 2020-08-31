@@ -7,17 +7,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ZymoticB/terraform-provider-circleci/internal/client"
-
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+
+	circleciapi "github.com/jszwedko/go-circleci"
 )
 
-func resourceCircleCIEnvironmentVariable() *schema.Resource {
+func resourceCircleCIProject() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceCircleCIEnvironmentVariableCreate,
-		Read:   resourceCircleCIEnvironmentVariableRead,
-		Delete: resourceCircleCIEnvironmentVariableDelete,
-		Exists: resourceCircleCIEnvironmentVariableExists,
+		Create: resourceCircleCIProjectCreate,
+		Read:   resourceCircleCIProjectRead,
+		Delete: resourceCircleCIProjectDelete,
+		Exists: resourceCircleCIProjectExists,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -28,34 +28,30 @@ func resourceCircleCIEnvironmentVariable() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"organization": {
-				Description: "The CircleCI organization.",
+			"vcs": {
+				Description: "The VCS type of the target project",
 				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-			},
-			"project": {
-				Description: "The name of the CircleCI project to create the variable in",
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-			},
-			"name": {
-				Description: "The name of the environment variable",
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
 				ValidateFunc: func(i interface{}, keyName string) (warnings []string, errors []error) {
 					v, ok := i.(string)
 					if !ok {
-						return nil, []error{fmt.Errorf("expected type of %s to be string", keyName)}
+						return nil, []error{fmt.Errorf("expected type of %s to be string but it was %T", keyName, i)}
 					}
-					if !client.ValidateEnvVarName(v) {
-						return nil, []error{fmt.Errorf("environment variable name %s is not valid. See https://circleci.com/docs/2.0/env-vars/#injecting-environment-variables-with-the-api", v)}
+					switch v {
+					case "gh":
+						fallthrough
+					case "bb":
+					default:
+						return nil, []error{fmt.Errorf("%s must be one of {gh, bb} but was %s", keyName, v)}
 					}
 
 					return nil, nil
 				},
+			},
+			"project": {
+				Description: "The name of the VCS project to follow",
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
 			},
 			"value": {
 				Description: "The value of the environment variable",
@@ -107,7 +103,7 @@ func resourceCircleCIEnvironmentVariableResourceV0() *schema.Resource {
 					if !ok {
 						return nil, []error{fmt.Errorf("expected type of %s to be string", keyName)}
 					}
-					if !client.ValidateEnvVarName(v) {
+					if !circleciapi.ValidateEnvVarName(v) {
 						return nil, []error{fmt.Errorf("environment variable name %s is not valid. See https://circleci.com/docs/2.0/env-vars/#injecting-environment-variables-with-the-api", v)}
 					}
 
@@ -137,8 +133,8 @@ func resourceCircleCIEnvironmentVariableUpgradeV0(rawState map[string]interface{
 	if rawOrg != nil && rawOrg.(string) != "" {
 		organization = rawState["organization"].(string)
 	} else {
-		providerContext := meta.(ProviderContext)
-		organization = providerContext.Org
+		providerClient := meta.(*Client)
+		organization = providerClient.organization
 	}
 
 	rawState["id"] = generateId(organization, rawState["project"].(string), rawState["name"].(string))
@@ -153,39 +149,33 @@ func hashString(str string) string {
 	return base64.StdEncoding.EncodeToString(hash[:])
 }
 
-func resourceCircleCIEnvironmentVariableCreate(d *schema.ResourceData, meta interface{}) error {
-	providerContext := meta.(ProviderContext)
-	client := providerContext.Client
+func resourceCircleCIEnvironmentVariableCreate(d *schema.ResourceData, m interface{}) error {
+	providerClient := m.(*Client)
 
+	organization := getOrganization(d, providerClient)
 	projectName := d.Get("project").(string)
 	envName := d.Get("name").(string)
 	envValue := d.Get("value").(string)
 
-	organization := getOrganization(d, providerContext)
-	if organization == "" {
-		return fmt.Errorf("organization has not been set for environment variable %s in project %s", envName, projectName)
-	}
-
-	env, err := client.GetEnvVar(providerContext.VCS, organization, projectName, envName)
+	exists, err := providerClient.EnvVarExists(organization, projectName, envName)
 	if err != nil {
 		return err
 	}
 
-	if env.Name != "" {
+	if exists {
 		return fmt.Errorf("environment variable '%s' already exists for project '%s'", envName, projectName)
 	}
 
-	if _, err := client.AddEnvVar(providerContext.VCS, organization, projectName, envName, envValue); err != nil {
+	if _, err := providerClient.AddEnvVar(organization, projectName, envName, envValue); err != nil {
 		return err
 	}
 
 	d.SetId(generateId(organization, projectName, envName))
-	return resourceCircleCIEnvironmentVariableRead(d, meta)
+	return resourceCircleCIEnvironmentVariableRead(d, m)
 }
 
-func resourceCircleCIEnvironmentVariableRead(d *schema.ResourceData, meta interface{}) error {
-	providerContext := meta.(ProviderContext)
-	client := providerContext.Client
+func resourceCircleCIEnvironmentVariableRead(d *schema.ResourceData, m interface{}) error {
+	providerClient := m.(*Client)
 
 	// If we don't have a project name we're doing an import. Parse it from the ID.
 	if _, ok := d.GetOk("name"); !ok {
@@ -194,15 +184,11 @@ func resourceCircleCIEnvironmentVariableRead(d *schema.ResourceData, meta interf
 		}
 	}
 
+	organization := getOrganization(d, providerClient)
 	projectName := d.Get("project").(string)
 	envName := d.Get("name").(string)
 
-	organization := getOrganization(d, providerContext)
-	if organization == "" {
-		return fmt.Errorf("organization has not been set for environment variable %s in project %s", envName, projectName)
-	}
-
-	envVar, err := client.GetEnvVar(providerContext.VCS, organization, projectName, envName)
+	envVar, err := providerClient.GetEnvVar(organization, projectName, envName)
 	if err != nil {
 		return err
 	}
@@ -216,19 +202,14 @@ func resourceCircleCIEnvironmentVariableRead(d *schema.ResourceData, meta interf
 	return nil
 }
 
-func resourceCircleCIEnvironmentVariableDelete(d *schema.ResourceData, meta interface{}) error {
-	providerContext := meta.(ProviderContext)
-	client := providerContext.Client
+func resourceCircleCIEnvironmentVariableDelete(d *schema.ResourceData, m interface{}) error {
+	providerClient := m.(*Client)
 
+	organization := getOrganization(d, providerClient)
 	projectName := d.Get("project").(string)
 	envName := d.Get("name").(string)
 
-	organization := getOrganization(d, providerContext)
-	if organization == "" {
-		return fmt.Errorf("organization has not been set for environment variable %s in project %s", envName, projectName)
-	}
-
-	err := client.DeleteEnvVar(providerContext.VCS, organization, projectName, envName)
+	err := providerClient.DeleteEnvVar(organization, projectName, envName)
 	if err != nil {
 		return err
 	}
@@ -238,9 +219,8 @@ func resourceCircleCIEnvironmentVariableDelete(d *schema.ResourceData, meta inte
 	return nil
 }
 
-func resourceCircleCIEnvironmentVariableExists(d *schema.ResourceData, meta interface{}) (bool, error) {
-	providerContext := meta.(ProviderContext)
-	client := providerContext.Client
+func resourceCircleCIEnvironmentVariableExists(d *schema.ResourceData, m interface{}) (bool, error) {
+	providerClient := m.(*Client)
 
 	// If we don't have a project name we're doing an import. Parse it from the ID.
 	if _, ok := d.GetOk("name"); !ok {
@@ -249,20 +229,26 @@ func resourceCircleCIEnvironmentVariableExists(d *schema.ResourceData, meta inte
 		}
 	}
 
+	organization := getOrganization(d, providerClient)
 	projectName := d.Get("project").(string)
 	envName := d.Get("name").(string)
 
-	organization := getOrganization(d, providerContext)
-	if organization == "" {
-		return false, fmt.Errorf("organization has not been set for environment variable %s in project %s", envName, projectName)
-	}
-
-	envVar, err := client.GetEnvVar(providerContext.VCS, organization, projectName, envName)
+	envVar, err := providerClient.GetEnvVar(organization, projectName, envName)
 	if err != nil {
 		return false, err
 	}
 
 	return bool(envVar.Value != ""), nil
+}
+
+func getOrganization(d *schema.ResourceData, providerClient *Client) string {
+	organization, ok := d.GetOk("organization")
+	if ok {
+		org := organization.(string)
+		return org
+	}
+
+	return providerClient.organization
 }
 
 func setOrgProjectNameFromEnvironmentVariableId(d *schema.ResourceData) error {

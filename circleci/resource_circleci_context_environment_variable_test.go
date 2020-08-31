@@ -5,6 +5,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/ZymoticB/terraform-provider-circleci/internal/client"
+
 	"github.com/CircleCI-Public/circleci-cli/api"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
@@ -81,7 +83,7 @@ func TestAccCircleCIContextEnvironmentVariable_import(t *testing.T) {
 				ImportStateIdFunc: func(s *terraform.State) (string, error) {
 					return fmt.Sprintf(
 						"%s/%s/%s",
-						testAccOrgProvider.Meta().(*Client).organization,
+						testAccOrgProvider.Meta().(ProviderContext).Org,
 						context.ID,
 						"VAR",
 					), nil
@@ -123,7 +125,7 @@ func TestAccCircleCIContextEnvironmentVariable_import_name(t *testing.T) {
 				ImportStateIdFunc: func(s *terraform.State) (string, error) {
 					return fmt.Sprintf(
 						"%s/%s/%s",
-						testAccOrgProvider.Meta().(*Client).organization,
+						testAccOrgProvider.Meta().(ProviderContext).Org,
 						"terraform-test",
 						"VAR",
 					), nil
@@ -141,7 +143,7 @@ func TestAccCircleCIContextEnvironmentVariable_import_name(t *testing.T) {
 
 func testAccCheckCircleCIContextEnvironmentVariableExists(addr string, variable *api.Resource) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		client := testAccOrgProvider.Meta().(*Client)
+		providerContext := testAccOrgProvider.Meta().(ProviderContext)
 
 		resource, ok := s.RootModule().Resources[addr]
 		if !ok {
@@ -151,7 +153,12 @@ func testAccCheckCircleCIContextEnvironmentVariableExists(addr string, variable 
 			return fmt.Errorf("No instance ID is set")
 		}
 
-		ctx, err := GetContextByID(client.graphql, client.organization, client.vcs, resource.Primary.Attributes["context_id"])
+		ctx, err := client.GetContextByID(
+			providerContext.GraphQLClient,
+			providerContext.Org,
+			providerContext.VCS,
+			resource.Primary.Attributes["context_id"],
+		)
 		if err != nil {
 			return fmt.Errorf("error getting context: %w", err)
 		}
@@ -172,7 +179,7 @@ func testAccCheckCircleCIContextEnvironmentVariableExists(addr string, variable 
 }
 
 func testAccCheckCircleCIContextEnvironmentVariableDestroy(s *terraform.State) error {
-	client := testAccOrgProvider.Meta().(*Client)
+	providerContext := testAccOrgProvider.Meta().(ProviderContext)
 
 	for _, resource := range s.RootModule().Resources {
 		if resource.Type != "circleci_context_environment_variable" {
@@ -183,7 +190,12 @@ func testAccCheckCircleCIContextEnvironmentVariableDestroy(s *terraform.State) e
 			return fmt.Errorf("No instance ID is set")
 		}
 
-		_, err := GetContextByID(client.graphql, client.organization, client.vcs, resource.Primary.Attributes["context_id"])
+		_, err := client.GetContextByID(
+			providerContext.GraphQLClient,
+			providerContext.Org,
+			providerContext.VCS,
+			resource.Primary.Attributes["context_id"],
+		)
 		if err == nil {
 			return fmt.Errorf("Context still exists: %s", resource.Primary.Attributes["context_id"])
 		}
