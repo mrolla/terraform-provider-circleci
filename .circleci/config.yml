@@ -9,17 +9,17 @@ jobs:
       - run:
           name: Test
           command: |
-            go test -mod=vendor -cover ./...
+            go test -cover ./...
       - run:
           name: Build
           command: |
-            CGO_ENABLED=0 GOOS=darwin GOARCH=386 go build -mod=vendor -ldflags="-s -w" -a -o build/terraform-provider-circleci-darwin-386
-            CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -mod=vendor -ldflags="-s -w" -a -o build/terraform-provider-circleci-darwin-amd64
-            CGO_ENABLED=0 GOOS=linux GOARCH=386 go build -mod=vendor -ldflags="-s -w" -a -o build/terraform-provider-circleci-linux-386
-            CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -mod=vendor -ldflags="-s -w" -a -o build/terraform-provider-circleci-linux-amd64
-            CGO_ENABLED=0 GOOS=linux GOARCH=arm go build -mod=vendor -ldflags="-s -w" -a -o build/terraform-provider-circleci-linux-arm
-            CGO_ENABLED=0 GOOS=windows GOARCH=386 go build -mod=vendor -ldflags="-s -w" -a -o build/terraform-provider-circleci-windows-386.exe
-            CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -mod=vendor -ldflags="-s -w" -a -o build/terraform-provider-circleci-windows-amd64.exe
+            CGO_ENABLED=0 GOOS=darwin GOARCH=386 go build -ldflags="-s -w" -a -o build/terraform-provider-circleci-darwin-386
+            CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -a -o build/terraform-provider-circleci-darwin-amd64
+            CGO_ENABLED=0 GOOS=linux GOARCH=386 go build -ldflags="-s -w" -a -o build/terraform-provider-circleci-linux-386
+            CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -a -o build/terraform-provider-circleci-linux-amd64
+            CGO_ENABLED=0 GOOS=linux GOARCH=arm go build -ldflags="-s -w" -a -o build/terraform-provider-circleci-linux-arm
+            CGO_ENABLED=0 GOOS=windows GOARCH=386 go build -ldflags="-s -w" -a -o build/terraform-provider-circleci-windows-386.exe
+            CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -a -o build/terraform-provider-circleci-windows-amd64.exe
       - run:
           name: Compute checksum of binaries
           command: |
