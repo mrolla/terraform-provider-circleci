@@ -122,7 +122,7 @@ func TestAccCircleCIContextEnvironmentVariable_import_name(t *testing.T) {
 				ResourceName: "circleci_context_environment_variable.foo",
 				ImportStateId: fmt.Sprintf(
 					"%s/%s/%s",
-					testAccOrgProvider.Meta().(*Client).organization,
+					os.Getenv("CIRCLECI_ORGANIZATION"),
 					"terraform-test",
 					"VAR",
 				),
