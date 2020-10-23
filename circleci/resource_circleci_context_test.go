@@ -2,6 +2,7 @@ package circleci
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/CircleCI-Public/circleci-cli/api"
@@ -101,7 +102,7 @@ func TestAccCircleCIContext_import_name(t *testing.T) {
 				ResourceName: "circleci_context.foo",
 				ImportStateId: fmt.Sprintf(
 					"%s/%s",
-					testAccOrgProvider.Meta().(*Client).organization,
+					os.Getenv("CIRCLECI_ORGANIZATION"),
 					"terraform-test",
 				),
 				ImportState:       true,
