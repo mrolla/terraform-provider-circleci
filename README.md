@@ -1,6 +1,7 @@
 # CircleCI Terraform provider
 
-[![Build Status](https://circleci.com/gh/mrolla/terraform-provider-circleci.svg?style=shield)](https://circleci.com/gh/mrolla/terraform-provider-circleci.svg?style=shield) [![Go Report Card](https://goreportcard.com/badge/github.com/mrolla/terraform-provider-circleci)](https://goreportcard.com/badge/github.com/mrolla/terraform-provider-circleci)
+[![Build Status](https://circleci.com/gh/mrolla/terraform-provider-circleci.svg?style=shield)](https://circleci.com/gh/mrolla/terraform-provider-circleci/tree/master)
+[![Go Report Card](https://goreportcard.com/badge/github.com/mrolla/terraform-provider-circleci)](https://goreportcard.com/badge/github.com/mrolla/terraform-provider-circleci)
 
 - Website: https://www.terraform.io
 - [![Gitter chat](https://badges.gitter.im/hashicorp-terraform/Lobby.png)](https://gitter.im/hashicorp-terraform/Lobby)
