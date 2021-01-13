@@ -34,6 +34,6 @@ resource "circleci_context" "build" {
 
 The following arguments are supported:
 
-* `vcs_type` - (Required) The version control system, either "github" or "bitbucket".
 * `api_token` - (Required) A CircleCI API token. This can also be set via the `CIRCLECI_TOKEN` environment variable.
+* `vcs_type` - (Optional) The version control system, either `"github"` or `"bitbucket"`. Defaults to `"github"`.
 * `organization` - (Optional) The organization where resources will be created. If unset, an organization must be provided with each resource.
