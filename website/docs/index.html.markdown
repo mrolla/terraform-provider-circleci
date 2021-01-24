@@ -34,6 +34,8 @@ resource "circleci_context" "build" {
 
 The following arguments are supported:
 
-* `vcs_type` - (Required) The version control system, either "github" or "bitbucket".
 * `api_token` - (Required) A CircleCI API token. This can also be set via the `CIRCLECI_TOKEN` environment variable.
-* `organization` - (Optional) The organization where resources will be created. If unset, an organization must be provided with each resource.
+* `vcs_type` - (Optional) The version control system, either `"github"` or `"bitbucket"`. Defaults to `"github"`. This can also be set via the `CIRCLECI_VCS_TYPE` environment variable.
+* `organization` - (Optional) The organization where resources will be created. If unset, an organization must be provided with each resource. This can also be set via the `CIRCLECI_ORGANIZATION` environment variable.
+* `url` - (Optional) The URL for the the CircleCI API (v1). Defaults to `"https://circleci.com/api/v1.1/"`. This value should generally only be set for testing. This can also be set via the `CIRCLECI_URL` environment variable.
+* `graphql_url` - (Optional) The URL for the the CircleCI GraphQL API (unstable). Defaults to `"https://circleci.com/graphql-unstable"`. This value should generally only be set for testing. This can also be set via the `CIRCLECI_GRAPHQL_URL` environment variable.
