@@ -90,6 +90,10 @@ func (c *Client) CreateContext(org, name string) (*api.Context, error) {
 	return ctx, nil
 }
 
+func (c *Client) DeleteContext(id string) error {
+	return c.contexts.DeleteContext(id)
+}
+
 // CreateContextEnvironmentVariable creates a new context environment variable
 func (c *Client) CreateContextEnvironmentVariable(ctx, variable, value string) error {
 	return c.contexts.CreateEnvironmentVariable(ctx, variable, value)

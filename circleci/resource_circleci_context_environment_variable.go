@@ -22,10 +22,11 @@ func resourceCircleCIContextEnvironmentVariable() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"variable": {
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-				Description: "The name of the environment variable",
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				Description:  "The name of the environment variable",
+				ValidateFunc: validateEnvironmentVariableNameFunc,
 			},
 			"value": {
 				Type:      schema.TypeString,
