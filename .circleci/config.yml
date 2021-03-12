@@ -10,6 +10,8 @@ jobs:
           name: Test
           command: |
             go test -mod=vendor -cover ./...
+          environment:
+            TEST_CIRCLECI_ORGANIZATION: test
       - run:
           name: Build
           command: |
