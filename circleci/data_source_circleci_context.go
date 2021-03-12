@@ -34,14 +34,9 @@ func dataSourceCircleCIContextRead(d *schema.ResourceData, m interface{}) error 
 		return err
 	}
 
-	ctx, err := GetContextByName(
-		client.graphql,
-		org,
-		client.vcs,
-		d.Get("name").(string),
-	)
+	ctx, err := client.contexts.ContextByName(client.vcs, org, d.Get("name").(string))
 	if err != nil {
-		if errors.Is(err, ErrContextNotFound) {
+		if errors.As(err, httpError) && httpError.Code == 404 {
 			d.SetId("")
 			return nil
 		}

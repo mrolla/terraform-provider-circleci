@@ -61,7 +61,7 @@ func resourceCircleCIContextRead(d *schema.ResourceData, m interface{}) error {
 	ctx, err := client.GetContext(d.Id())
 	if err != nil {
 		var httpError *api.HTTPError
-		if errors.Is(err, httpError) && httpError.Code == 404 {
+		if errors.As(err, httpError) && httpError.Code == 404 {
 			d.SetId("")
 			return nil
 		}
