@@ -6,23 +6,21 @@ import (
 	"net/url"
 
 	"github.com/CircleCI-Public/circleci-cli/api"
-	graphqlclient "github.com/CircleCI-Public/circleci-cli/client"
-	restclient "github.com/jszwedko/go-circleci"
+	"github.com/CircleCI-Public/circleci-cli/api/rest"
 )
 
-// Client provides access to the CircleCI REST and GraphQL APIs
+// Client provides access to the CircleCI REST API
 type Client struct {
-	rest         *restclient.Client
-	graphql      *graphqlclient.Client
+	rest         *rest.Client
+	contexts     *api.ContextRestClient
 	vcs          string
 	organization string
 }
 
 // Config configures a Client
 type Config struct {
-	URL        string
-	GraphqlURL string
-	Token      string
+	URL   string
+	Token string
 
 	VCS          string
 	Organization string
@@ -30,28 +28,14 @@ type Config struct {
 
 // NewClient initializes CircleCI API clients (REST and GraphQL) and returns a new client object
 func NewClient(config Config) (*Client, error) {
-	restURL, err := url.Parse(config.URL)
-	if err != nil {
-		return nil, err
-	}
-
-	graphqlURL, err := url.Parse(config.GraphqlURL)
+	u, err := url.Parse(config.URL)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Client{
-		rest: &restclient.Client{
-			BaseURL: restURL,
-			Token:   config.Token,
-		},
-		contexts: api.NewContextRestClient(restURL.Host, restURL.Path, config.Token),
-		graphql: graphqlclient.NewClient(
-			fmt.Sprintf("%s://%s", graphqlURL.Scheme, graphqlURL.Host),
-			graphqlURL.Path,
-			config.Token,
-			false,
-		),
+		rest:     rest.New(u.Host, u.Path, config.Token),
+		contexts: api.NewContextRestClient(u.Host, u.Path, u.Token),
 
 		vcs:          config.VCS,
 		organization: config.Organization,

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/CircleCI-Public/circleci-cli/api"
-
+	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
@@ -16,14 +16,8 @@ func resourceCircleCIContext() *schema.Resource {
 		Create: resourceCircleCIContextCreate,
 		Read:   resourceCircleCIContextRead,
 		Delete: resourceCircleCIContextDelete,
-		Exists: resourceCircleCIContextExists,
 		Importer: &schema.ResourceImporter{
 			State: resourceCircleCIContextImport,
-		},
-
-		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(5 * time.Minute),
-			Delete: schema.DefaultTimeout(5 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -53,29 +47,26 @@ func resourceCircleCIContextCreate(d *schema.ResourceData, m interface{}) error 
 		return err
 	}
 
-	if err := api.CreateContext(client.graphql, client.vcs, org, name); err != nil {
+	ctx, err := client.CreateContext(org, name)
+	if err != nil {
 		return fmt.Errorf("error creating context: %w", err)
 	}
 
-	ctx, err := GetContextByName(client.graphql, org, client.vcs, name)
-	if err != nil {
-		return err
-	}
 	d.SetId(ctx.ID)
-
 	return resourceCircleCIContextRead(d, m)
 }
 
 func resourceCircleCIContextRead(d *schema.ResourceData, m interface{}) error {
 	client := m.(*Client)
 
-	org, err := client.Organization(d.Get("organization").(string))
+	ctx, err := client.GetContext(d.Id())
 	if err != nil {
-		return err
-	}
+		var httpError *api.HTTPError
+		if errors.Is(err, httpError) && httpError.Code == 404 {
+			d.SetId("")
+			return nil
+		}
 
-	ctx, err := GetContextByID(client.graphql, org, client.vcs, d.Id())
-	if err != nil {
 		return err
 	}
 
@@ -86,36 +77,11 @@ func resourceCircleCIContextRead(d *schema.ResourceData, m interface{}) error {
 func resourceCircleCIContextDelete(d *schema.ResourceData, m interface{}) error {
 	client := m.(*Client)
 
-	if err := api.DeleteContext(client.graphql, d.Id()); err != nil {
+	if err := client.contexts.DeleteContext(d.Id()); err != nil {
 		return fmt.Errorf("error deleting context: %w", err)
 	}
 
 	return nil
-}
-
-func resourceCircleCIContextExists(d *schema.ResourceData, m interface{}) (bool, error) {
-	client := m.(*Client)
-
-	org, err := client.Organization(d.Get("organization").(string))
-	if err != nil {
-		return false, err
-	}
-
-	_, err = GetContextByID(
-		client.graphql,
-		org,
-		client.vcs,
-		d.Id(),
-	)
-	if err != nil {
-		if errors.Is(err, ErrContextNotFound) {
-			return false, nil
-		}
-
-		return false, err
-	}
-
-	return true, nil
 }
 
 func resourceCircleCIContextImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
@@ -126,10 +92,21 @@ func resourceCircleCIContextImport(d *schema.ResourceData, m interface{}) ([]*sc
 		return nil, errors.New("importing context requires $organization/$context")
 	}
 
-	ctx, err := GetContextByIDOrName(client.graphql, parts[0], client.vcs, parts[1])
+	org, id := parts[0], parts[1]
+
+	var ctx *api.Context
+	var err error
+
+	if _, uuidErr := uuid.Parse(id); uuidErr != nil {
+		ctx, err = client.GetContext(id)
+	} else {
+		ctx, err := client.contexts.ContextByName(client.vcs, org, id)
+	}
+
 	if err != nil {
 		return nil, err
 	}
+
 	d.SetId(ctx.ID)
 
 	return []*schema.ResourceData{d}, nil
