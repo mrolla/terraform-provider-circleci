@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	client "github.com/mrolla/terraform-provider-circleci/circleci/client"
 )
 
 func resourceCircleCIEnvironmentVariable() *schema.Resource {
@@ -134,8 +135,14 @@ func resourceCircleCIEnvironmentVariableUpgradeV0(rawState map[string]interface{
 	if rawOrg != nil && rawOrg.(string) != "" {
 		organization = rawState["organization"].(string)
 	} else {
-		providerClient := meta.(*Client)
-		organization = providerClient.organization
+		c := meta.(*client.Client)
+
+		org, err := c.Organization(organization)
+		if err != nil {
+			return nil, err
+		}
+
+		organization = org
 	}
 
 	rawState["id"] = generateId(organization, rawState["project"].(string), rawState["name"].(string))
@@ -151,9 +158,9 @@ func hashString(str string) string {
 }
 
 func resourceCircleCIEnvironmentVariableCreate(d *schema.ResourceData, m interface{}) error {
-	client := m.(*Client)
+	c := m.(*client.Client)
 
-	organization, err := client.Organization(d.Get("organization").(string))
+	organization, err := c.Organization(d.Get("organization").(string))
 	if err != nil {
 		return err
 	}
@@ -162,12 +169,16 @@ func resourceCircleCIEnvironmentVariableCreate(d *schema.ResourceData, m interfa
 	name := d.Get("name").(string)
 	value := d.Get("value").(string)
 
-	d.SetId(generateId(organization, projectName, envName))
+	if err := c.CreateProjectEnvironmentVariable(organization, project, name, value); err != nil {
+		return fmt.Errorf("failed to create environment variable: %w", err)
+	}
+
+	d.SetId(generateId(organization, project, name))
 	return resourceCircleCIEnvironmentVariableRead(d, m)
 }
 
 func resourceCircleCIEnvironmentVariableRead(d *schema.ResourceData, m interface{}) error {
-	client := m.(*Client)
+	c := m.(*client.Client)
 
 	// If we don't have a project name we're doing an import. Parse it from the ID.
 	if _, ok := d.GetOk("name"); !ok {
@@ -176,7 +187,7 @@ func resourceCircleCIEnvironmentVariableRead(d *schema.ResourceData, m interface
 		}
 	}
 
-	organization, err := client.Organization(d.Get("organization").(string))
+	organization, err := c.Organization(d.Get("organization").(string))
 	if err != nil {
 		return err
 	}
@@ -184,7 +195,7 @@ func resourceCircleCIEnvironmentVariableRead(d *schema.ResourceData, m interface
 	project := d.Get("project").(string)
 	name := d.Get("name").(string)
 
-	has, err := client.HasProjectEnvironmentVariable(org, project, name)
+	has, err := c.HasProjectEnvironmentVariable(organization, project, name)
 	if err != nil {
 		return fmt.Errorf("failed to get project environment variable: %w", err)
 	}
@@ -198,9 +209,9 @@ func resourceCircleCIEnvironmentVariableRead(d *schema.ResourceData, m interface
 }
 
 func resourceCircleCIEnvironmentVariableDelete(d *schema.ResourceData, m interface{}) error {
-	client := m.(*Client)
+	c := m.(*client.Client)
 
-	organization, err := client.Organization(d.Get("organization").(string))
+	organization, err := c.Organization(d.Get("organization").(string))
 	if err != nil {
 		return err
 	}
@@ -208,7 +219,7 @@ func resourceCircleCIEnvironmentVariableDelete(d *schema.ResourceData, m interfa
 	project := d.Get("project").(string)
 	name := d.Get("name").(string)
 
-	err := client.DeleteProjectEnvironmentVariable(organization, project, name)
+	err = c.DeleteProjectEnvironmentVariable(organization, project, name)
 	if err != nil {
 		return fmt.Errorf("failed to delete project environment variable: %w", err)
 	}

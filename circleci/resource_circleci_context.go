@@ -4,10 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"time"
 
-	"github.com/CircleCI-Public/circleci-cli/api"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	client "github.com/mrolla/terraform-provider-circleci/circleci/client"
 )
 
 func resourceCircleCIContext() *schema.Resource {
@@ -37,16 +36,12 @@ func resourceCircleCIContext() *schema.Resource {
 }
 
 func resourceCircleCIContextCreate(d *schema.ResourceData, m interface{}) error {
-	client := m.(*Client)
+	c := m.(*client.Client)
 
 	name := d.Get("name").(string)
+	org := d.Get("organization").(string)
 
-	org, err := client.Organization(d.Get("organization").(string))
-	if err != nil {
-		return err
-	}
-
-	ctx, err := client.CreateContext(org, name)
+	ctx, err := c.CreateContext(org, name)
 	if err != nil {
 		return fmt.Errorf("error creating context: %w", err)
 	}
@@ -56,12 +51,11 @@ func resourceCircleCIContextCreate(d *schema.ResourceData, m interface{}) error 
 }
 
 func resourceCircleCIContextRead(d *schema.ResourceData, m interface{}) error {
-	client := m.(*Client)
+	c := m.(*client.Client)
 
-	ctx, err := client.GetContext(d.Id())
+	ctx, err := c.GetContext(d.Id())
 	if err != nil {
-		var httpError *api.HTTPError
-		if errors.As(err, httpError) && httpError.Code == 404 {
+		if errors.Is(err, client.ErrContextNotFound) {
 			d.SetId("")
 			return nil
 		}
@@ -74,9 +68,9 @@ func resourceCircleCIContextRead(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceCircleCIContextDelete(d *schema.ResourceData, m interface{}) error {
-	client := m.(*Client)
+	c := m.(*client.Client)
 
-	if err := client.contexts.DeleteContext(d.Id()); err != nil {
+	if err := c.DeleteContext(d.Id()); err != nil {
 		return fmt.Errorf("error deleting context: %w", err)
 	}
 
@@ -84,14 +78,14 @@ func resourceCircleCIContextDelete(d *schema.ResourceData, m interface{}) error 
 }
 
 func resourceCircleCIContextImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	client := m.(*Client)
+	c := m.(*client.Client)
 
 	parts := strings.Split(d.Id(), "/")
 	if len(parts) != 2 {
 		return nil, errors.New("importing context requires $organization/$context")
 	}
 
-	ctx, err := client.GetContextByIDOrName(parts...)
+	ctx, err := c.GetContextByIDOrName(parts[0], parts[1])
 	if err != nil {
 		return nil, err
 	}

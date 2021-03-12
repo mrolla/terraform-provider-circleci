@@ -5,9 +5,8 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"time"
 
-	"github.com/CircleCI-Public/circleci-cli/api"
+	client "github.com/mrolla/terraform-provider-circleci/circleci/client"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -17,7 +16,6 @@ func resourceCircleCIContextEnvironmentVariable() *schema.Resource {
 		Create: resourceCircleCIContextEnvironmentVariableCreate,
 		Read:   resourceCircleCIContextEnvironmentVariableRead,
 		Delete: resourceCircleCIContextEnvironmentVariableDelete,
-		Exists: resourceCircleCIContextEnvironmentVariableExists,
 		Importer: &schema.ResourceImporter{
 			State: resourceCircleCIContextEnvironmentVariableImport,
 		},
@@ -56,13 +54,13 @@ func resourceCircleCIContextEnvironmentVariable() *schema.Resource {
 }
 
 func resourceCircleCIContextEnvironmentVariableCreate(d *schema.ResourceData, m interface{}) error {
-	client := m.(*Client)
+	c := m.(*client.Client)
 
 	variable := d.Get("variable").(string)
 	context := d.Get("context_id").(string)
 	value := d.Get("value").(string)
 
-	if err := client.contexts.CreateEnvironmentVariable(context, variable, value); err != nil {
+	if err := c.CreateContextEnvironmentVariable(context, variable, value); err != nil {
 		return fmt.Errorf("error storing environment variable: %w", err)
 	}
 
@@ -72,34 +70,27 @@ func resourceCircleCIContextEnvironmentVariableCreate(d *schema.ResourceData, m 
 }
 
 func resourceCircleCIContextEnvironmentVariableRead(d *schema.ResourceData, m interface{}) error {
-	client := m.(*Client)
+	c := m.(*client.Client)
 
-	variable := d.Get("variable").(string)
 	ctx := d.Get("context_id").(string)
+	variable := d.Get("variable").(string)
 
-	envs, err := client.EnvironmentVariables(ctx)
+	has, err := c.HasContextEnvironmentVariable(ctx, variable)
+	if err != nil {
+		return fmt.Errorf("failed to get context environment variables: %w", err)
+	}
 
-	var httpError *api.HTTPError
-	if errors.As(err, httpError) && httpError.Code == 404 {
+	if !has {
 		d.SetId("")
-		return nil
 	}
-
-	for _, env := range envs {
-		if env.Variable == variable {
-			return nil
-		}
-	}
-
-	d.SetId("")
 
 	return nil
 }
 
 func resourceCircleCIContextEnvironmentVariableDelete(d *schema.ResourceData, m interface{}) error {
-	client := m.(*Client)
+	c := m.(*client.Client)
 
-	if err := client.contexts.DeleteEnvironmentVariable(d.Get("context_id").(string), d.Id()); err != nil {
+	if err := c.DeleteContextEnvironmentVariable(d.Get("context_id").(string), d.Id()); err != nil {
 		return fmt.Errorf("error deleting environment variable: %w", err)
 	}
 
@@ -107,7 +98,7 @@ func resourceCircleCIContextEnvironmentVariableDelete(d *schema.ResourceData, m 
 }
 
 func resourceCircleCIContextEnvironmentVariableImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	client := m.(*Client)
+	c := m.(*client.Client)
 
 	value := os.Getenv("CIRCLECI_ENV_VALUE")
 	if value == "" {
@@ -123,7 +114,7 @@ func resourceCircleCIContextEnvironmentVariableImport(d *schema.ResourceData, m 
 	d.Set("variable", parts[2])
 	d.SetId(parts[2])
 
-	ctx, err := client.GetContextByIDOrName(parts[0], parts[1])
+	ctx, err := c.GetContextByIDOrName(parts[0], parts[1])
 	if err != nil {
 		return nil, err
 	}
