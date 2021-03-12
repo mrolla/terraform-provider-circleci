@@ -1,7 +1,15 @@
 package client
 
+import (
+	"errors"
+	"fmt"
+	"net/url"
+
+	"github.com/CircleCI-Public/circleci-cli/api/rest"
+)
+
 type ProjectEnvironmentVariable struct {
-	Name string `json:"name"`
+	Name  string `json:"name"`
 	Value string `json:"value"`
 }
 
@@ -12,7 +20,7 @@ func (c *Client) HasProjectEnvironmentVariable(org, project, name string) (bool,
 	}
 
 	u := &url.URL{
-		Path: fmt.Sprintf("project/%s/envvar/%s", slug, name)
+		Path: fmt.Sprintf("project/%s/envvar/%s", slug, name),
 	}
 
 	req, err := c.rest.NewRequest("GET", u, nil)
@@ -20,10 +28,10 @@ func (c *Client) HasProjectEnvironmentVariable(org, project, name string) (bool,
 		return false, err
 	}
 
-	_, err := c.rest.DoRequest(req, nil)
+	_, err = c.rest.DoRequest(req, nil)
 	if err != nil {
-		var httpError *api.HTTPError
-		if errors.As(err, httpError) && httpError.Code == 404 {
+		var httpError *rest.HTTPError
+		if errors.As(err, &httpError) && httpError.Code == 404 {
 			return false, nil
 		}
 
@@ -38,13 +46,13 @@ func (c *Client) CreateProjectEnvironmentVariable(org, project, name, value stri
 	if err != nil {
 		return err
 	}
-	
+
 	u := &url.URL{
-		Path: fmt.Sprintf("project/%s/envvar", slug)
+		Path: fmt.Sprintf("project/%s/envvar", slug),
 	}
 
 	req, err := c.rest.NewRequest("POST", u, &ProjectEnvironmentVariable{
-		Name: name,
+		Name:  name,
 		Value: value,
 	})
 
@@ -52,30 +60,7 @@ func (c *Client) CreateProjectEnvironmentVariable(org, project, name, value stri
 		return err
 	}
 
-	_, err := c.rest.DoRequest(req, nil)
-	return err
-}
-
-func (c *Client) CreateProjectEnvironmentVariable(org, project, name, value string) error {
-	slug, err := c.Slug(org, project)
-	if err != nil {
-		return err
-	}
-	
-	u := &url.URL{
-		Path: fmt.Sprintf("project/%s/envvar", slug)
-	}
-
-	req, err := c.rest.NewRequest("POST", u, &ProjectEnvironmentVariable{
-		Name: name,
-		Value: value,
-	})
-
-	if err != nil {
-		return err
-	}
-
-	_, err := c.rest.DoRequest(req, nil)
+	_, err = c.rest.DoRequest(req, nil)
 	return err
 }
 
@@ -84,9 +69,9 @@ func (c *Client) DeleteProjectEnvironmentVariable(org, project, name string) err
 	if err != nil {
 		return err
 	}
-	
+
 	u := &url.URL{
-		Path: fmt.Sprintf("project/%s/envvar", slug)
+		Path: fmt.Sprintf("project/%s/envvar", slug),
 	}
 
 	req, err := c.rest.NewRequest("DELETE", u, nil)
@@ -94,6 +79,6 @@ func (c *Client) DeleteProjectEnvironmentVariable(org, project, name string) err
 		return err
 	}
 
-	_, err := c.rest.DoRequest(req, nil)
+	_, err = c.rest.DoRequest(req, nil)
 	return err
 }

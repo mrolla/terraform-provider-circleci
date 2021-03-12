@@ -15,7 +15,6 @@ func resourceCircleCIEnvironmentVariable() *schema.Resource {
 		Create: resourceCircleCIEnvironmentVariableCreate,
 		Read:   resourceCircleCIEnvironmentVariableRead,
 		Delete: resourceCircleCIEnvironmentVariableDelete,
-		Exists: resourceCircleCIEnvironmentVariableExists,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
