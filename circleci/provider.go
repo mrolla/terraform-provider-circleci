@@ -29,14 +29,15 @@ func Provider() terraform.ResourceProvider {
 			"url": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("CIRCLECI_URL", "https://circleci.com/api/v1.1/"),
-				Description: "The URL of the Circle CI API.",
+				DefaultFunc: schema.EnvDefaultFunc("CIRCLECI_URL", "https://circleci.com/api/v2/"),
+				Description: "The URL of the Circle CI API (v2)",
 			},
 			"graphql_url": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("CIRCLECI_GRAPHQL_URL", "https://circleci.com/graphql-unstable"),
 				Description: "The URL of the CircleCI GraphQL API",
+				Deprecated:  "CircleCI's v2 REST API has replaced the GraphQL API in this provider. This attribute is unused and will be removed in the next major version."
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{

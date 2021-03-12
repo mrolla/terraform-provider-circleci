@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/CircleCI-Public/circleci-cli/api"
 	graphqlclient "github.com/CircleCI-Public/circleci-cli/client"
 	restclient "github.com/jszwedko/go-circleci"
 )
@@ -44,6 +45,7 @@ func NewClient(config Config) (*Client, error) {
 			BaseURL: restURL,
 			Token:   config.Token,
 		},
+		contexts: api.NewContextRestClient(restURL.Host, restURL.Path, config.Token),
 		graphql: graphqlclient.NewClient(
 			fmt.Sprintf("%s://%s", graphqlURL.Scheme, graphqlURL.Host),
 			graphqlURL.Path,
