@@ -10,6 +10,7 @@ import (
 )
 
 // Client provides access to the CircleCI REST API
+// It uses upstream client functionality where possible and defines its own methods as needed
 type Client struct {
 	rest         *rest.Client
 	contexts     *api.ContextRestClient
@@ -26,8 +27,8 @@ type Config struct {
 	Organization string
 }
 
-// NewClient initializes CircleCI API clients (REST and GraphQL) and returns a new client object
-func NewClient(config Config) (*Client, error) {
+// New initializes a client object for the provider
+func New(config Config) (*Client, error) {
 	u, err := url.Parse(config.URL)
 	if err != nil {
 		return nil, err
@@ -62,6 +63,7 @@ func (c *Client) Organization(org string) (string, error) {
 	return "", errors.New("organization is required")
 }
 
+// Slug returns a project slug, including the VCS, organization, and project names
 func (c *Client) Slug(org, project string) (string, error) {
 	o, err := c.Organization(org)
 	if err != nil {

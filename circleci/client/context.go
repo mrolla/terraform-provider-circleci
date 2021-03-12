@@ -1,7 +1,6 @@
 package client
 
 import (
-	"errors"
 	"fmt"
 	"net/url"
 
@@ -9,10 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
-var (
-	ErrContextNotFound = errors.New("context not found")
-)
-
+// GetContext gets an existing context by its ID (UUID)
 func (c *Client) GetContext(id string) (*api.Context, error) {
 	req, err := c.rest.NewRequest("GET", &url.URL{Path: fmt.Sprintf("context/%s", id)}, nil)
 	if err != nil {
@@ -29,6 +25,7 @@ func (c *Client) GetContext(id string) (*api.Context, error) {
 	return ctx, nil
 }
 
+// GetContextByIDOrName gets a context by ID if a UUID is specified, and by name otherwise
 func (c *Client) GetContextByIDOrName(id, org string) (*api.Context, error) {
 	if _, uuidErr := uuid.Parse(id); uuidErr != nil {
 		return c.GetContext(id)
@@ -37,20 +34,21 @@ func (c *Client) GetContextByIDOrName(id, org string) (*api.Context, error) {
 	}
 }
 
-type CreateContextRequest struct {
+type createContextRequest struct {
 	Name  string        `json:"name"`
-	Owner *ContextOwner `json:"owner"`
+	Owner *contextOwner `json:"owner"`
 }
 
-type ContextOwner struct {
+type contextOwner struct {
 	Slug string `json:"slug"`
 	Type string `json:"type"`
 }
 
+// CreateContext creates a new context and returns the created context object
 func (c *Client) CreateContext(org, name string) (*api.Context, error) {
-	req, err := c.rest.NewRequest("POST", &url.URL{Path: "context"}, &CreateContextRequest{
+	req, err := c.rest.NewRequest("POST", &url.URL{Path: "context"}, &createContextRequest{
 		Name: name,
-		Owner: &ContextOwner{
+		Owner: &contextOwner{
 			Slug: fmt.Sprintf("%s/%s", c.vcs, org),
 			Type: "organization",
 		},
