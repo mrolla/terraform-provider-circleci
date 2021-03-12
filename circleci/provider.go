@@ -39,7 +39,7 @@ func Provider() terraform.ResourceProvider {
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("CIRCLECI_GRAPHQL_URL", "https://circleci.com/graphql-unstable"),
 				Description: "The URL of the CircleCI GraphQL API",
-				Deprecated:  "CircleCI's v2 REST API has replaced the GraphQL API in this provider. This attribute is unused and will be removed in the next major version."
+				Deprecated:  "CircleCI's v2 REST API has replaced the GraphQL API in this provider. This attribute is unused and will be removed in the next major version.",
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
@@ -57,7 +57,6 @@ func Provider() terraform.ResourceProvider {
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	return client.New(client.Config{
 		URL:          d.Get("url").(string),
-		GraphqlURL:   d.Get("graphql_url").(string),
 		Token:        d.Get("api_token").(string),
 		Organization: d.Get("organization").(string),
 		VCS:          d.Get("vcs_type").(string),
