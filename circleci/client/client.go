@@ -57,64 +57,6 @@ func (c *Client) Organization(org string) (string, error) {
 	return "", errors.New("organization is required")
 }
 
-// GetEnvVar get the environment variable with given name
-// It returns an empty structure if no environment variable exists with that name
-func (c *Client) GetEnvVar(organization string, projectName, envVarName string) (*restclient.EnvVar, error) {
-	org, err := c.validateOrganization(organization, projectName, envVarName)
-	if err != nil {
-		return nil, err
-	}
-
-	return c.rest.GetEnvVar(c.vcs, org, projectName, envVarName)
-}
-
-// EnvVarExists check if environment variable exists with given name
-func (c *Client) EnvVarExists(organization string, projectName, envVarName string) (bool, error) {
-	org, err := c.validateOrganization(organization, projectName, envVarName)
-	if err != nil {
-		return false, err
-	}
-
-	envVar, err := c.rest.GetEnvVar(c.vcs, org, projectName, envVarName)
-	if err != nil {
-		return false, err
-	}
-	return bool(envVar.Name != ""), nil
-}
-
-// AddEnvVar create an environment variable with given name and value
-func (c *Client) AddEnvVar(organization string, projectName, envVarName, envVarValue string) (*restclient.EnvVar, error) {
-	org, err := c.validateOrganization(organization, projectName, envVarName)
-	if err != nil {
-		return nil, err
-	}
-
-	return c.rest.AddEnvVar(c.vcs, org, projectName, envVarName, envVarValue)
-}
-
-// DeleteEnvVar delete the environment variable with given name
-func (c *Client) DeleteEnvVar(organization string, projectName, envVarName string) error {
-	org, err := c.validateOrganization(organization, projectName, envVarName)
-	if err != nil {
-		return err
-	}
-
-	return c.rest.DeleteEnvVar(c.vcs, org, projectName, envVarName)
-}
-
-func (c *Client) validateOrganization(organization string, projectName, envVarName string) (string, error) {
-	if organization == "" && c.organization == "" {
-		return "", fmt.Errorf("organization has not been set for environment variable %s in project %s", projectName, envVarName)
-	}
-
-	if organization != "" {
-		return organization, nil
-	}
-
-	return c.organization, nil
-
-}
-
 func (c *Client) Slug(org, project string) (string, error) {
 	o, err := c.Organization(org)
 	if err != nil {
