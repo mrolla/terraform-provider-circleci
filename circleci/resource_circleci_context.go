@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/CircleCI-Public/circleci-cli/api"
-	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
@@ -92,17 +91,7 @@ func resourceCircleCIContextImport(d *schema.ResourceData, m interface{}) ([]*sc
 		return nil, errors.New("importing context requires $organization/$context")
 	}
 
-	org, id := parts[0], parts[1]
-
-	var ctx *api.Context
-	var err error
-
-	if _, uuidErr := uuid.Parse(id); uuidErr != nil {
-		ctx, err = client.GetContext(id)
-	} else {
-		ctx, err := client.contexts.ContextByName(client.vcs, org, id)
-	}
-
+	ctx, err := client.GetContextByIDOrName(parts...)
 	if err != nil {
 		return nil, err
 	}
