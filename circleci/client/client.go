@@ -33,9 +33,14 @@ func NewClient(config Config) (*Client, error) {
 		return nil, err
 	}
 
+	contexts, err := api.NewContextRestClient(u.Host, u.Path, config.Token)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Client{
 		rest:     rest.New(u.Host, u.Path, config.Token),
-		contexts: api.NewContextRestClient(u.Host, u.Path, u.Token),
+		contexts: contexts,
 
 		vcs:          config.VCS,
 		organization: config.Organization,
@@ -63,5 +68,5 @@ func (c *Client) Slug(org, project string) (string, error) {
 		return "", err
 	}
 
-	return fmt.Sprintf("%s/%s/%s", c.vcs, o, project)
+	return fmt.Sprintf("%s/%s/%s", c.vcs, o, project), nil
 }

@@ -3,6 +3,7 @@ package client
 import (
 	"errors"
 	"fmt"
+	"net/url"
 
 	"github.com/CircleCI-Public/circleci-cli/api"
 	"github.com/google/uuid"
@@ -20,7 +21,7 @@ func (c *Client) GetContext(id string) (*api.Context, error) {
 
 	ctx := &api.Context{}
 
-	_, err := c.rest.DoRequest(req, ctx)
+	_, err = c.rest.DoRequest(req, ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -30,14 +31,14 @@ func (c *Client) GetContext(id string) (*api.Context, error) {
 
 func (c *Client) GetContextByIDOrName(id, org string) (*api.Context, error) {
 	if _, uuidErr := uuid.Parse(id); uuidErr != nil {
-		return client.GetContext(id)
+		return c.GetContext(id)
 	} else {
-		return client.contexts.ContextByName(client.vcs, org, id)
+		return c.contexts.ContextByName(c.vcs, org, id)
 	}
 }
 
 type CreateContextRequest struct {
-	Name  string `json:"name"`
+	Name  string        `json:"name"`
 	Owner *ContextOwner `json:"owner"`
 }
 
@@ -47,19 +48,19 @@ type ContextOwner struct {
 }
 
 func (c *Client) CreateContext(org, name string) (*api.Context, error) {
-	req, err := c.rest.NewRequest("POST", &url.URL{Path: fmt.Sprintf("context/%s", id)}, &CreateContextRequest{
+	req, err := c.rest.NewRequest("POST", &url.URL{Path: "context"}, &CreateContextRequest{
 		Name: name,
 		Owner: &ContextOwner{
 			Slug: fmt.Sprintf("%s/%s", c.vcs, org),
 			Type: "organization",
-		}
+		},
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	ctx := &api.Context{}
-	_, err := c.rest.DoRequest(req, ctx)
+	_, err = c.rest.DoRequest(req, ctx)
 	if err != nil {
 		return nil, err
 	}
