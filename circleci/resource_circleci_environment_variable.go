@@ -8,8 +8,6 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-
-	circleciapi "github.com/jszwedko/go-circleci"
 )
 
 func resourceCircleCIEnvironmentVariable() *schema.Resource {
