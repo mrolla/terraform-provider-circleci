@@ -8,11 +8,12 @@ import (
 	"github.com/CircleCI-Public/circleci-cli/api/rest"
 )
 
-type ProjectEnvironmentVariable struct {
+type projectEnvironmentVariable struct {
 	Name  string `json:"name"`
 	Value string `json:"value"`
 }
 
+// HasProjectEnvironmentVariable checks for the existence of a matching project environment variable by name
 func (c *Client) HasProjectEnvironmentVariable(org, project, name string) (bool, error) {
 	slug, err := c.Slug(org, project)
 	if err != nil {
@@ -41,6 +42,7 @@ func (c *Client) HasProjectEnvironmentVariable(org, project, name string) (bool,
 	return true, nil
 }
 
+// CreateProjectEnvironmentVariable creates a new project environment variable
 func (c *Client) CreateProjectEnvironmentVariable(org, project, name, value string) error {
 	slug, err := c.Slug(org, project)
 	if err != nil {
@@ -51,7 +53,7 @@ func (c *Client) CreateProjectEnvironmentVariable(org, project, name, value stri
 		Path: fmt.Sprintf("project/%s/envvar", slug),
 	}
 
-	req, err := c.rest.NewRequest("POST", u, &ProjectEnvironmentVariable{
+	req, err := c.rest.NewRequest("POST", u, &projectEnvironmentVariable{
 		Name:  name,
 		Value: value,
 	})
@@ -64,6 +66,7 @@ func (c *Client) CreateProjectEnvironmentVariable(org, project, name, value stri
 	return err
 }
 
+// DeleteProjectEnvironmentVariable deletes an existing project environment variable
 func (c *Client) DeleteProjectEnvironmentVariable(org, project, name string) error {
 	slug, err := c.Slug(org, project)
 	if err != nil {
