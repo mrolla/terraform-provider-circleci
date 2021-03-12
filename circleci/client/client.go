@@ -114,3 +114,12 @@ func (c *Client) validateOrganization(organization string, projectName, envVarNa
 	return c.organization, nil
 
 }
+
+func (c *Client) Slug(org, project string) (string, error) {
+	o, err := c.Organization(org)
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%s/%s/%s", c.vcs, o, project)
+}
