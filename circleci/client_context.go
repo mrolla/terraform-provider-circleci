@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/CircleCI-Public/circleci-cli/api"
-	graphql "github.com/CircleCI-Public/circleci-cli/client"
+	"github.com/google/uuid"
 )
 
 var (
@@ -26,6 +26,14 @@ func (c *Client) GetContext(id string) (*api.Context, error) {
 	}
 
 	return ctx, nil
+}
+
+func (c *Client) GetContextByIDOrName(id, org string) (*api.Context, error) {
+	if _, uuidErr := uuid.Parse(id); uuidErr != nil {
+		return client.GetContext(id)
+	} else {
+		return client.contexts.ContextByName(client.vcs, org, id)
+	}
 }
 
 type CreateContextRequest struct {
