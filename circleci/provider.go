@@ -3,6 +3,8 @@ package circleci
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+
+	"github.com/mrolla/terraform-provider-circleci/circleci/client"
 )
 
 func Provider() terraform.ResourceProvider {
@@ -53,7 +55,7 @@ func Provider() terraform.ResourceProvider {
 }
 
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {
-	return NewClient(Config{
+	return client.New(client.Config{
 		URL:          d.Get("url").(string),
 		GraphqlURL:   d.Get("graphql_url").(string),
 		Token:        d.Get("api_token").(string),
