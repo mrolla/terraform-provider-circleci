@@ -152,32 +152,23 @@ func hashString(str string) string {
 }
 
 func resourceCircleCIEnvironmentVariableCreate(d *schema.ResourceData, m interface{}) error {
-	providerClient := m.(*Client)
+	client := m.(*Client)
 
-	organization := getOrganization(d, providerClient)
-	projectName := d.Get("project").(string)
-	envName := d.Get("name").(string)
-	envValue := d.Get("value").(string)
-
-	exists, err := providerClient.EnvVarExists(organization, projectName, envName)
+	organization, err := client.Organization(d.Get("organization").(string))
 	if err != nil {
 		return err
 	}
 
-	if exists {
-		return fmt.Errorf("environment variable '%s' already exists for project '%s'", envName, projectName)
-	}
-
-	if _, err := providerClient.AddEnvVar(organization, projectName, envName, envValue); err != nil {
-		return err
-	}
+	project := d.Get("project").(string)
+	name := d.Get("name").(string)
+	value := d.Get("value").(string)
 
 	d.SetId(generateId(organization, projectName, envName))
 	return resourceCircleCIEnvironmentVariableRead(d, m)
 }
 
 func resourceCircleCIEnvironmentVariableRead(d *schema.ResourceData, m interface{}) error {
-	providerClient := m.(*Client)
+	client := m.(*Client)
 
 	// If we don't have a project name we're doing an import. Parse it from the ID.
 	if _, ok := d.GetOk("name"); !ok {
@@ -186,71 +177,46 @@ func resourceCircleCIEnvironmentVariableRead(d *schema.ResourceData, m interface
 		}
 	}
 
-	organization := getOrganization(d, providerClient)
-	projectName := d.Get("project").(string)
-	envName := d.Get("name").(string)
-
-	envVar, err := providerClient.GetEnvVar(organization, projectName, envName)
+	organization, err := client.Organization(d.Get("organization").(string))
 	if err != nil {
 		return err
 	}
 
-	if err := d.Set("name", envVar.Name); err != nil {
-		return err
+	project := d.Get("project").(string)
+	name := d.Get("name").(string)
+
+	has, err := client.HasProjectEnvironmentVariable(org, project, name)
+	if err != nil {
+		return fmt.Errorf("failed to get project environment variable: %w", err)
 	}
 
-	// environment variable value can only be set at creation since CircleCI API return hidden values : https://circleci.com/docs/api/#list-environment-variables
-	// also it is better to avoid storing sensitive value in terraform state if possible.
+	if !has {
+		d.SetId("")
+		return nil
+	}
+
 	return nil
 }
 
 func resourceCircleCIEnvironmentVariableDelete(d *schema.ResourceData, m interface{}) error {
-	providerClient := m.(*Client)
+	client := m.(*Client)
 
-	organization := getOrganization(d, providerClient)
-	projectName := d.Get("project").(string)
-	envName := d.Get("name").(string)
-
-	err := providerClient.DeleteEnvVar(organization, projectName, envName)
+	organization, err := client.Organization(d.Get("organization").(string))
 	if err != nil {
 		return err
+	}
+
+	project := d.Get("project").(string)
+	name := d.Get("name").(string)
+
+	err := client.DeleteProjectEnvironmentVariable(organization, project, name)
+	if err != nil {
+		return fmt.Errorf("failed to delete project environment variable: %w", err)
 	}
 
 	d.SetId("")
 
 	return nil
-}
-
-func resourceCircleCIEnvironmentVariableExists(d *schema.ResourceData, m interface{}) (bool, error) {
-	providerClient := m.(*Client)
-
-	// If we don't have a project name we're doing an import. Parse it from the ID.
-	if _, ok := d.GetOk("name"); !ok {
-		if err := setOrgProjectNameFromEnvironmentVariableId(d); err != nil {
-			return false, err
-		}
-	}
-
-	organization := getOrganization(d, providerClient)
-	projectName := d.Get("project").(string)
-	envName := d.Get("name").(string)
-
-	envVar, err := providerClient.GetEnvVar(organization, projectName, envName)
-	if err != nil {
-		return false, err
-	}
-
-	return bool(envVar.Value != ""), nil
-}
-
-func getOrganization(d *schema.ResourceData, providerClient *Client) string {
-	organization, ok := d.GetOk("organization")
-	if ok {
-		org := organization.(string)
-		return org
-	}
-
-	return providerClient.organization
 }
 
 func setOrgProjectNameFromEnvironmentVariableId(d *schema.ResourceData) error {

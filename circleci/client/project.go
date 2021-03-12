@@ -5,7 +5,7 @@ type ProjectEnvironmentVariable struct {
 	Value string `json:"value"`
 }
 
-func (c *Client) GetProjectEnvironmentVariable(org, project, name string) (bool, error) {
+func (c *Client) HasProjectEnvironmentVariable(org, project, name string) (bool, error) {
 	slug, err := c.Slug(org, project)
 	if err != nil {
 		return false, err
