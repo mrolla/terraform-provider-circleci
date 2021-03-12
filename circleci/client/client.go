@@ -12,8 +12,8 @@ import (
 // Client provides access to the CircleCI REST API
 // It uses upstream client functionality where possible and defines its own methods as needed
 type Client struct {
-	rest         *rest.Client
 	contexts     *api.ContextRestClient
+	rest         *rest.Client
 	vcs          string
 	organization string
 }
@@ -71,4 +71,13 @@ func (c *Client) Slug(org, project string) (string, error) {
 	}
 
 	return fmt.Sprintf("%s/%s/%s", c.vcs, o, project), nil
+}
+
+func isNotFound(err error) bool {
+	var httpError *rest.HTTPError
+	if errors.As(err, &httpError) && httpError.Code == 404 {
+		return true
+	}
+
+	return false
 }
