@@ -34,13 +34,15 @@ func New(config Config) (*Client, error) {
 		return nil, err
 	}
 
-	contexts, err := api.NewContextRestClient(u.Host, u.Path, config.Token)
+	rootURL := fmt.Sprintf("%s://%s", u.Scheme, u.Host)
+
+	contexts, err := api.NewContextRestClient(rootURL, u.Path, config.Token)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Client{
-		rest:     rest.New(u.Host, u.Path, config.Token),
+		rest:     rest.New(rootURL, u.Path, config.Token),
 		contexts: contexts,
 
 		vcs:          config.VCS,
