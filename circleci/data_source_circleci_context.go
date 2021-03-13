@@ -31,7 +31,7 @@ func dataSourceCircleCIContextRead(d *schema.ResourceData, m interface{}) error 
 	org := d.Get("organization").(string)
 	name := d.Get("name").(string)
 
-	ctx, err := c.GetContextByName(org, name)
+	ctx, err := c.GetContextByName(name, org)
 	if err != nil {
 		return err
 	}
