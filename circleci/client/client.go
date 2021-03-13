@@ -6,7 +6,7 @@ import (
 	"net/url"
 
 	"github.com/CircleCI-Public/circleci-cli/api"
-	"github.com/CircleCI-Public/circleci-cli/api/rest"
+	"github.com/mrolla/terraform-provider-circleci/circleci/client/rest"
 )
 
 // Client provides access to the CircleCI REST API
