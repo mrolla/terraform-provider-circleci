@@ -108,7 +108,7 @@ func TestAccCircleCIContext_import_name(t *testing.T) {
 				ResourceName: "circleci_context.foo",
 				ImportStateId: fmt.Sprintf(
 					"%s/%s",
-					os.Getenv("CIRCLECI_ORGANIZATION"),
+					os.Getenv("TEST_CIRCLECI_ORGANIZATION"),
 					"terraform-test",
 				),
 				ImportState:       true,
