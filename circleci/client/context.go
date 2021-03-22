@@ -45,8 +45,8 @@ func (c *Client) GetContextByName(name, org string) (*api.Context, error) {
 }
 
 // GetContextByIDOrName gets a context by ID if a UUID is specified, and by name otherwise
-func (c *Client) GetContextByIDOrName(id, org string) (*api.Context, error) {
-	if _, uuidErr := uuid.Parse(id); uuidErr != nil {
+func (c *Client) GetContextByIDOrName(org, id string) (*api.Context, error) {
+	if _, uuidErr := uuid.Parse(id); uuidErr == nil {
 		return c.GetContext(id)
 	} else {
 		return c.contexts.ContextByName(c.vcs, org, id)
