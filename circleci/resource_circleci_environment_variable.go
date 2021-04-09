@@ -149,6 +149,15 @@ func resourceCircleCIEnvironmentVariableCreate(d *schema.ResourceData, m interfa
 	name := d.Get("name").(string)
 	value := d.Get("value").(string)
 
+	has, err := c.HasProjectEnvironmentVariable(organization, project, name)
+	if err != nil {
+		return err
+	}
+
+	if has {
+		return fmt.Errorf("environment variable already exists: %s", name)
+	}
+
 	if err := c.CreateProjectEnvironmentVariable(organization, project, name, value); err != nil {
 		return fmt.Errorf("failed to create environment variable: %w", err)
 	}
