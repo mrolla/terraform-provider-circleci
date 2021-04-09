@@ -74,7 +74,7 @@ func (c *Client) DeleteProjectEnvironmentVariable(org, project, name string) err
 	}
 
 	u := &url.URL{
-		Path: fmt.Sprintf("project/%s/envvar", slug),
+		Path: fmt.Sprintf("project/%s/envvar/%s", slug, name),
 	}
 
 	req, err := c.rest.NewRequest("DELETE", u, nil)
