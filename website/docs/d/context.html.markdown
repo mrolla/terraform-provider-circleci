@@ -10,8 +10,6 @@ description: |-
 
 Use this data source to get information about a CircleCI context.
 
-~> **Note** This resource uses the CircleCI GraphQL API, which is not officially supported.
-
 ## Example Usage
 
 ```hcl
