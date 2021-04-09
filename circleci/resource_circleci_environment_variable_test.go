@@ -334,7 +334,7 @@ func testAccCircleCIEnvironmentVariableCheckDestroy(c *client.Client, s *terrafo
 			return err
 		}
 
-		if !has {
+		if has {
 			return errors.New("Environment variable should have been destroyed")
 		}
 	}
