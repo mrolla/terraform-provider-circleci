@@ -27,7 +27,7 @@ func TestAccCircleCIEnvironmentVariableOrganizationNotSet(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccCircleCIEnvironmentVariableConfigProviderOrg(project, envName, "value-for-the-test"),
-				ExpectError: regexp.MustCompile("organization has not been set for environment variable .*"),
+				ExpectError: regexp.MustCompile("organization"),
 			},
 		},
 	})
