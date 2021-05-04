@@ -32,6 +32,12 @@ jobs:
           root: /terraform-provider-circleci
           paths:
             - build
+  lint:
+    docker:
+      - image: golangci/golangci-lint:v1.39.0
+    steps:
+      - checkout
+      - golangci-lint run
   release:
     working_directory: /build
     docker:

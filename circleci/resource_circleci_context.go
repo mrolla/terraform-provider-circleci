@@ -64,7 +64,7 @@ func resourceCircleCIContextRead(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
-	d.Set("name", ctx.Name)
+	_ = d.Set("name", ctx.Name)
 	return nil
 }
 

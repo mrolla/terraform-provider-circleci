@@ -105,14 +105,14 @@ func resourceCircleCIContextEnvironmentVariableImport(d *schema.ResourceData, m 
 	if value == "" {
 		return nil, errors.New("CIRCLECI_ENV_VALUE is required to import a context environment variable")
 	}
-	d.Set("value", value)
+	_ = d.Set("value", value)
 
 	parts := strings.Split(d.Id(), "/")
 	if len(parts) != 3 {
 		return nil, errors.New("importing context environment variables requires $organization/$context/$variable")
 	}
 
-	d.Set("variable", parts[2])
+	_ = d.Set("variable", parts[2])
 	d.SetId(parts[2])
 
 	ctx, err := c.GetContextByIDOrName(parts[0], parts[1])
@@ -120,7 +120,7 @@ func resourceCircleCIContextEnvironmentVariableImport(d *schema.ResourceData, m 
 		return nil, err
 	}
 
-	d.Set("context_id", ctx.ID)
+	_ = d.Set("context_id", ctx.ID)
 
 	return []*schema.ResourceData{d}, nil
 }
