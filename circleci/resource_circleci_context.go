@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+
 	client "github.com/mrolla/terraform-provider-circleci/circleci/client"
 )
 
