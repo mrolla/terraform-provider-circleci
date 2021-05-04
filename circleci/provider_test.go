@@ -8,11 +8,15 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
-var testAccNoOrgProvider *schema.Provider
-var testAccNoOrgProviders map[string]terraform.ResourceProvider
+var (
+	testAccNoOrgProvider  *schema.Provider
+	testAccNoOrgProviders map[string]terraform.ResourceProvider
+)
 
-var testAccOrgProvider *schema.Provider
-var testAccOrgProviders map[string]terraform.ResourceProvider
+var (
+	testAccOrgProvider  *schema.Provider
+	testAccOrgProviders map[string]terraform.ResourceProvider
+)
 
 func init() {
 	testAccNoOrgProvider = Provider().(*schema.Provider)
