@@ -9,9 +9,7 @@ import (
 	"github.com/google/uuid"
 )
 
-var (
-	ErrContextNotFound = errors.New("context not found")
-)
+var ErrContextNotFound = errors.New("context not found")
 
 // GetContext gets an existing context by its ID (UUID)
 func (c *Client) GetContext(id string) (*api.Context, error) {

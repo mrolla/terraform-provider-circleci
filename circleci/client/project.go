@@ -57,7 +57,6 @@ func (c *Client) CreateProjectEnvironmentVariable(org, project, name, value stri
 		Name:  name,
 		Value: value,
 	})
-
 	if err != nil {
 		return err
 	}
