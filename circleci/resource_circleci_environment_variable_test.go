@@ -7,12 +7,12 @@ import (
 	"regexp"
 	"testing"
 
-	client "github.com/mrolla/terraform-provider-circleci/circleci/client"
-	"github.com/stretchr/testify/assert"
-
 	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/stretchr/testify/assert"
+
+	client "github.com/mrolla/terraform-provider-circleci/circleci/client"
 )
 
 func TestAccCircleCIEnvironmentVariableOrganizationNotSet(t *testing.T) {

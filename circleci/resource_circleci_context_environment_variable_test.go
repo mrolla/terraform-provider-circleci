@@ -8,6 +8,7 @@ import (
 	"github.com/CircleCI-Public/circleci-cli/api"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+
 	client "github.com/mrolla/terraform-provider-circleci/circleci/client"
 )
 

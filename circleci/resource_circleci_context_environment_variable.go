@@ -6,9 +6,9 @@ import (
 	"os"
 	"strings"
 
-	client "github.com/mrolla/terraform-provider-circleci/circleci/client"
-
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+
+	client "github.com/mrolla/terraform-provider-circleci/circleci/client"
 )
 
 func resourceCircleCIContextEnvironmentVariable() *schema.Resource {
