@@ -10,6 +10,8 @@ jobs:
           name: Test
           command: |
             go test -mod=vendor -cover ./...
+          environment:
+            TEST_CIRCLECI_ORGANIZATION: test
       - run:
           name: Build
           command: |
@@ -30,6 +32,12 @@ jobs:
           root: /terraform-provider-circleci
           paths:
             - build
+  lint:
+    docker:
+      - image: golangci/golangci-lint:v1.39.0
+    steps:
+      - checkout
+      - golangci-lint run
   release:
     working_directory: /build
     docker:

@@ -3,6 +3,8 @@ package circleci
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+
+	"github.com/mrolla/terraform-provider-circleci/circleci/client"
 )
 
 func Provider() terraform.ResourceProvider {
@@ -29,14 +31,8 @@ func Provider() terraform.ResourceProvider {
 			"url": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("CIRCLECI_URL", "https://circleci.com/api/v1.1/"),
-				Description: "The URL of the Circle CI API.",
-			},
-			"graphql_url": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("CIRCLECI_GRAPHQL_URL", "https://circleci.com/graphql-unstable"),
-				Description: "The URL of the CircleCI GraphQL API",
+				DefaultFunc: schema.EnvDefaultFunc("CIRCLECI_URL", "https://circleci.com/api/v2/"),
+				Description: "The URL of the Circle CI API (v2)",
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
@@ -52,9 +48,8 @@ func Provider() terraform.ResourceProvider {
 }
 
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {
-	return NewClient(Config{
+	return client.New(client.Config{
 		URL:          d.Get("url").(string),
-		GraphqlURL:   d.Get("graphql_url").(string),
 		Token:        d.Get("api_token").(string),
 		Organization: d.Get("organization").(string),
 		VCS:          d.Get("vcs_type").(string),

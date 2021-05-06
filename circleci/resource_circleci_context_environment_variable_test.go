@@ -8,10 +8,12 @@ import (
 	"github.com/CircleCI-Public/circleci-cli/api"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+
+	client "github.com/mrolla/terraform-provider-circleci/circleci/client"
 )
 
 func TestAccCircleCIContextEnvironmentVariable_basic(t *testing.T) {
-	variable := &api.Resource{}
+	variable := &api.EnvironmentVariable{}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -33,7 +35,7 @@ func TestAccCircleCIContextEnvironmentVariable_basic(t *testing.T) {
 }
 
 func TestAccCircleCIContextEnvironmentVariable_update(t *testing.T) {
-	variable := &api.Resource{}
+	variable := &api.EnvironmentVariable{}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -65,7 +67,7 @@ func TestAccCircleCIContextEnvironmentVariable_update(t *testing.T) {
 }
 
 func TestAccCircleCIContextEnvironmentVariable_import(t *testing.T) {
-	context := &api.CircleCIContext{}
+	context := &api.Context{}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -79,9 +81,14 @@ func TestAccCircleCIContextEnvironmentVariable_import(t *testing.T) {
 			{
 				ResourceName: "circleci_context_environment_variable.foo",
 				ImportStateIdFunc: func(s *terraform.State) (string, error) {
+					org, err := testAccOrgProvider.Meta().(*client.Client).Organization("")
+					if err != nil {
+						return "", err
+					}
+
 					return fmt.Sprintf(
 						"%s/%s/%s",
-						testAccOrgProvider.Meta().(*Client).organization,
+						org,
 						context.ID,
 						"VAR",
 					), nil
@@ -122,7 +129,7 @@ func TestAccCircleCIContextEnvironmentVariable_import_name(t *testing.T) {
 				ResourceName: "circleci_context_environment_variable.foo",
 				ImportStateId: fmt.Sprintf(
 					"%s/%s/%s",
-					os.Getenv("CIRCLECI_ORGANIZATION"),
+					os.Getenv("TEST_CIRCLECI_ORGANIZATION"),
 					"terraform-test",
 					"VAR",
 				),
@@ -137,9 +144,9 @@ func TestAccCircleCIContextEnvironmentVariable_import_name(t *testing.T) {
 	})
 }
 
-func testAccCheckCircleCIContextEnvironmentVariableExists(addr string, variable *api.Resource) resource.TestCheckFunc {
+func testAccCheckCircleCIContextEnvironmentVariableExists(addr string, variable *api.EnvironmentVariable) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		client := testAccOrgProvider.Meta().(*Client)
+		c := testAccOrgProvider.Meta().(*client.Client)
 
 		resource, ok := s.RootModule().Resources[addr]
 		if !ok {
@@ -149,12 +156,12 @@ func testAccCheckCircleCIContextEnvironmentVariableExists(addr string, variable 
 			return fmt.Errorf("No instance ID is set")
 		}
 
-		ctx, err := GetContextByID(client.graphql, client.organization, client.vcs, resource.Primary.Attributes["context_id"])
+		envs, err := c.ListContextEnvironmentVariables(resource.Primary.Attributes["context_id"])
 		if err != nil {
 			return fmt.Errorf("error getting context: %w", err)
 		}
 
-		for _, v := range ctx.Resources {
+		for _, v := range *envs {
 			if v.Variable == resource.Primary.Attributes["variable"] {
 				*variable = v
 				return nil
@@ -170,7 +177,7 @@ func testAccCheckCircleCIContextEnvironmentVariableExists(addr string, variable 
 }
 
 func testAccCheckCircleCIContextEnvironmentVariableDestroy(s *terraform.State) error {
-	client := testAccOrgProvider.Meta().(*Client)
+	c := testAccOrgProvider.Meta().(*client.Client)
 
 	for _, resource := range s.RootModule().Resources {
 		if resource.Type != "circleci_context_environment_variable" {
@@ -181,7 +188,7 @@ func testAccCheckCircleCIContextEnvironmentVariableDestroy(s *terraform.State) e
 			return fmt.Errorf("No instance ID is set")
 		}
 
-		_, err := GetContextByID(client.graphql, client.organization, client.vcs, resource.Primary.Attributes["context_id"])
+		_, err := c.GetContext(resource.Primary.Attributes["context_id"])
 		if err == nil {
 			return fmt.Errorf("Context still exists: %s", resource.Primary.Attributes["context_id"])
 		}
@@ -190,7 +197,7 @@ func testAccCheckCircleCIContextEnvironmentVariableDestroy(s *terraform.State) e
 	return nil
 }
 
-func testAccCheckCircleCIContextEnvironmentVariableAttributes_basic(variable *api.Resource) resource.TestCheckFunc {
+func testAccCheckCircleCIContextEnvironmentVariableAttributes_basic(variable *api.EnvironmentVariable) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		if variable.Variable != "VAR" {
 			return fmt.Errorf("Unexpected variable: %s", variable.Variable)
@@ -200,7 +207,7 @@ func testAccCheckCircleCIContextEnvironmentVariableAttributes_basic(variable *ap
 	}
 }
 
-func testAccCheckCircleCIContextEnvironmentVariableAttributes_update(variable *api.Resource) resource.TestCheckFunc {
+func testAccCheckCircleCIContextEnvironmentVariableAttributes_update(variable *api.EnvironmentVariable) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		if variable.Variable != "VAR_UPDATED" {
 			return fmt.Errorf("Unexpected variable: %s", variable.Variable)

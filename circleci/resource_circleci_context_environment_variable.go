@@ -5,11 +5,10 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"time"
-
-	"github.com/CircleCI-Public/circleci-cli/api"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+
+	client "github.com/mrolla/terraform-provider-circleci/circleci/client"
 )
 
 func resourceCircleCIContextEnvironmentVariable() *schema.Resource {
@@ -17,22 +16,17 @@ func resourceCircleCIContextEnvironmentVariable() *schema.Resource {
 		Create: resourceCircleCIContextEnvironmentVariableCreate,
 		Read:   resourceCircleCIContextEnvironmentVariableRead,
 		Delete: resourceCircleCIContextEnvironmentVariableDelete,
-		Exists: resourceCircleCIContextEnvironmentVariableExists,
 		Importer: &schema.ResourceImporter{
 			State: resourceCircleCIContextEnvironmentVariableImport,
 		},
 
-		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(5 * time.Minute),
-			Delete: schema.DefaultTimeout(5 * time.Minute),
-		},
-
 		Schema: map[string]*schema.Schema{
 			"variable": {
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-				Description: "The name of the environment variable",
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				Description:  "The name of the environment variable",
+				ValidateFunc: validateEnvironmentVariableNameFunc,
 			},
 			"value": {
 				Type:      schema.TypeString,
@@ -61,13 +55,13 @@ func resourceCircleCIContextEnvironmentVariable() *schema.Resource {
 }
 
 func resourceCircleCIContextEnvironmentVariableCreate(d *schema.ResourceData, m interface{}) error {
-	client := m.(*Client)
+	c := m.(*client.Client)
 
 	variable := d.Get("variable").(string)
 	context := d.Get("context_id").(string)
 	value := d.Get("value").(string)
 
-	if err := api.StoreEnvironmentVariable(client.graphql, context, variable, value); err != nil {
+	if err := c.CreateContextEnvironmentVariable(context, variable, value); err != nil {
 		return fmt.Errorf("error storing environment variable: %w", err)
 	}
 
@@ -77,73 +71,56 @@ func resourceCircleCIContextEnvironmentVariableCreate(d *schema.ResourceData, m 
 }
 
 func resourceCircleCIContextEnvironmentVariableRead(d *schema.ResourceData, m interface{}) error {
+	c := m.(*client.Client)
+
+	ctx := d.Get("context_id").(string)
+	variable := d.Get("variable").(string)
+
+	has, err := c.HasContextEnvironmentVariable(ctx, variable)
+	if err != nil {
+		return fmt.Errorf("failed to get context environment variables: %w", err)
+	}
+
+	if !has {
+		d.SetId("")
+	}
+
 	return nil
 }
 
 func resourceCircleCIContextEnvironmentVariableDelete(d *schema.ResourceData, m interface{}) error {
-	client := m.(*Client)
+	c := m.(*client.Client)
 
-	if err := api.DeleteEnvironmentVariable(client.graphql, d.Get("context_id").(string), d.Id()); err != nil {
+	if err := c.DeleteContextEnvironmentVariable(d.Get("context_id").(string), d.Id()); err != nil {
 		return fmt.Errorf("error deleting environment variable: %w", err)
 	}
 
 	return nil
 }
 
-func resourceCircleCIContextEnvironmentVariableExists(d *schema.ResourceData, m interface{}) (bool, error) {
-	client := m.(*Client)
-	variable := d.Get("variable").(string)
-
-	org, err := client.Organization(d.Get("organization").(string))
-	if err != nil {
-		return false, err
-	}
-
-	ctx, err := GetContextByID(
-		client.graphql,
-		org,
-		client.vcs,
-		d.Get("context_id").(string),
-	)
-	if err != nil {
-		if errors.Is(err, ErrContextNotFound) {
-			return false, nil
-		}
-
-		return false, err
-	}
-
-	for _, env := range ctx.Resources {
-		if env.Variable == variable {
-			return true, nil
-		}
-	}
-
-	return false, nil
-}
-
 func resourceCircleCIContextEnvironmentVariableImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	client := m.(*Client)
+	c := m.(*client.Client)
 
 	value := os.Getenv("CIRCLECI_ENV_VALUE")
 	if value == "" {
 		return nil, errors.New("CIRCLECI_ENV_VALUE is required to import a context environment variable")
 	}
-	d.Set("value", value)
+	_ = d.Set("value", value)
 
 	parts := strings.Split(d.Id(), "/")
 	if len(parts) != 3 {
-		return nil, errors.New("importing context environtment variables requires $organization/$context/$variable")
+		return nil, errors.New("importing context environment variables requires $organization/$context/$variable")
 	}
 
-	d.Set("variable", parts[2])
+	_ = d.Set("variable", parts[2])
 	d.SetId(parts[2])
 
-	ctx, err := GetContextByIDOrName(client.graphql, parts[0], client.vcs, parts[1])
+	ctx, err := c.GetContextByIDOrName(parts[0], parts[1])
 	if err != nil {
 		return nil, err
 	}
-	d.Set("context_id", ctx.ID)
+
+	_ = d.Set("context_id", ctx.ID)
 
 	return []*schema.ResourceData{d}, nil
 }
