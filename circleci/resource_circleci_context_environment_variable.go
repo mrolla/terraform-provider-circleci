@@ -96,7 +96,7 @@ func resourceCircleCIContextEnvironmentVariableUpate(d *schema.ResourceData, m i
 	context := d.Get("context_id").(string)
 	value := d.Get("value").(string)
 
-	if err := c.DeleteContextEnvironmentVariable(d.Get("context_id").(string), d.Id()); err != nil {
+	if err := c.DeleteContextEnvironmentVariable(context, d.Id()); err != nil {
 		return fmt.Errorf("error deleting environment variable: %w", err)
 	}
 
