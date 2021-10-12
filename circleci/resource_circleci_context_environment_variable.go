@@ -15,7 +15,7 @@ func resourceCircleCIContextEnvironmentVariable() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceCircleCIContextEnvironmentVariableCreate,
 		Read:   resourceCircleCIContextEnvironmentVariableRead,
-		Update: resourceCircleCIContextEnvironmentVariableUpate,
+		Update: resourceCircleCIContextEnvironmentVariableUpdate,
 		Delete: resourceCircleCIContextEnvironmentVariableDelete,
 		Importer: &schema.ResourceImporter{
 			State: resourceCircleCIContextEnvironmentVariableImport,
