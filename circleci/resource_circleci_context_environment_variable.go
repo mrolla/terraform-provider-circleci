@@ -89,7 +89,7 @@ func resourceCircleCIContextEnvironmentVariableRead(d *schema.ResourceData, m in
 	return nil
 }
 
-func resourceCircleCIContextEnvironmentVariableUpate(d *schema.ResourceData, m interface{}) error {
+func resourceCircleCIContextEnvironmentVariableUpdate(d *schema.ResourceData, m interface{}) error {
 	c := m.(*client.Client)
 
 	variable := d.Get("variable").(string)
