@@ -32,7 +32,6 @@ func resourceCircleCIContextEnvironmentVariable() *schema.Resource {
 			"value": {
 				Type:      schema.TypeString,
 				Required:  true,
-				ForceNew:  true,
 				Sensitive: true,
 				StateFunc: func(value interface{}) string {
 					return hashString(value.(string))
