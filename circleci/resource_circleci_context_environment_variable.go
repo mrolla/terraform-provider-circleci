@@ -15,6 +15,7 @@ func resourceCircleCIContextEnvironmentVariable() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceCircleCIContextEnvironmentVariableCreate,
 		Read:   resourceCircleCIContextEnvironmentVariableRead,
+		Update: resourceCircleCIContextEnvironmentVariableUpate,
 		Delete: resourceCircleCIContextEnvironmentVariableDelete,
 		Importer: &schema.ResourceImporter{
 			State: resourceCircleCIContextEnvironmentVariableImport,
@@ -83,6 +84,24 @@ func resourceCircleCIContextEnvironmentVariableRead(d *schema.ResourceData, m in
 
 	if !has {
 		d.SetId("")
+	}
+
+	return nil
+}
+
+func resourceCircleCIContextEnvironmentVariableUpate(d *schema.ResourceData, m interface{}) error {
+	c := m.(*client.Client)
+
+	variable := d.Get("variable").(string)
+	context := d.Get("context_id").(string)
+	value := d.Get("value").(string)
+
+	if err := c.DeleteContextEnvironmentVariable(d.Get("context_id").(string), d.Id()); err != nil {
+		return fmt.Errorf("error deleting environment variable: %w", err)
+	}
+
+	if err := c.CreateContextEnvironmentVariable(context, variable, value); err != nil {
+		return fmt.Errorf("error storing environment variable: %w", err)
 	}
 
 	return nil
