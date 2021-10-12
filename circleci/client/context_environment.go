@@ -2,8 +2,8 @@ package client
 
 import "github.com/CircleCI-Public/circleci-cli/api"
 
-// CreateContextEnvironmentVariable creates a new context environment variable
-func (c *Client) CreateContextEnvironmentVariable(ctx, variable, value string) error {
+// CreateOrUpdateContextEnvironmentVariable creates a new context environment variable
+func (c *Client) CreateOrUpdateContextEnvironmentVariable(ctx, variable, value string) error {
 	return c.contexts.CreateEnvironmentVariable(ctx, variable, value)
 }
 
