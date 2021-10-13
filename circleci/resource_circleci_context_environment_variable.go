@@ -13,7 +13,10 @@ import (
 
 func resourceCircleCIContextEnvironmentVariable() *schema.Resource {
 	return &schema.Resource{
+		// Create and Update have the same implementation, since the upstream API uses PUT
 		Create: resourceCircleCIContextEnvironmentVariableCreate,
+		Update: resourceCircleCIContextEnvironmentVariableCreate,
+
 		Read:   resourceCircleCIContextEnvironmentVariableRead,
 		Delete: resourceCircleCIContextEnvironmentVariableDelete,
 		Importer: &schema.ResourceImporter{
@@ -31,7 +34,6 @@ func resourceCircleCIContextEnvironmentVariable() *schema.Resource {
 			"value": {
 				Type:      schema.TypeString,
 				Required:  true,
-				ForceNew:  true,
 				Sensitive: true,
 				StateFunc: func(value interface{}) string {
 					return hashString(value.(string))
@@ -61,7 +63,7 @@ func resourceCircleCIContextEnvironmentVariableCreate(d *schema.ResourceData, m 
 	context := d.Get("context_id").(string)
 	value := d.Get("value").(string)
 
-	if err := c.CreateContextEnvironmentVariable(context, variable, value); err != nil {
+	if err := c.CreateOrUpdateContextEnvironmentVariable(context, variable, value); err != nil {
 		return fmt.Errorf("error storing environment variable: %w", err)
 	}
 
