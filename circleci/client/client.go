@@ -6,6 +6,7 @@ import (
 	"net/url"
 
 	"github.com/CircleCI-Public/circleci-cli/api"
+	"github.com/CircleCI-Public/circleci-cli/settings"
 
 	"github.com/mrolla/terraform-provider-circleci/circleci/client/rest"
 )
@@ -37,7 +38,11 @@ func New(config Config) (*Client, error) {
 
 	rootURL := fmt.Sprintf("%s://%s", u.Scheme, u.Host)
 
-	contexts, err := api.NewContextRestClient(rootURL, u.Path, config.Token)
+	contexts, err := api.NewContextRestClient(settings.Config{
+		Host:     rootURL,
+		Endpoint: u.Path,
+		Token:    config.Token,
+	})
 	if err != nil {
 		return nil, err
 	}
