@@ -3,6 +3,7 @@ package client
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 
 	"github.com/CircleCI-Public/circleci-cli/api"
@@ -39,9 +40,10 @@ func New(config Config) (*Client, error) {
 	rootURL := fmt.Sprintf("%s://%s", u.Scheme, u.Host)
 
 	contexts, err := api.NewContextRestClient(settings.Config{
-		Host:     rootURL,
-		Endpoint: u.Path,
-		Token:    config.Token,
+		Host:         rootURL,
+		RestEndpoint: u.Path,
+		Token:        config.Token,
+		HTTPClient:   http.DefaultClient,
 	})
 	if err != nil {
 		return nil, err
