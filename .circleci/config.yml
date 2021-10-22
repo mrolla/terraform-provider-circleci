@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: golang:1.14.3
+      - image: golang:1.17.2
     working_directory: /terraform-provider-circleci
     steps:
       - checkout
@@ -15,7 +15,6 @@ jobs:
       - run:
           name: Build
           command: |
-            CGO_ENABLED=0 GOOS=darwin GOARCH=386 go build -mod=vendor -ldflags="-s -w" -a -o build/terraform-provider-circleci-darwin-386
             CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -mod=vendor -ldflags="-s -w" -a -o build/terraform-provider-circleci-darwin-amd64
             CGO_ENABLED=0 GOOS=linux GOARCH=386 go build -mod=vendor -ldflags="-s -w" -a -o build/terraform-provider-circleci-linux-386
             CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -mod=vendor -ldflags="-s -w" -a -o build/terraform-provider-circleci-linux-amd64
@@ -41,7 +40,7 @@ jobs:
   release:
     working_directory: /build
     docker:
-      - image: golang:1.14.3
+      - image: golang:1.17.2
     steps:
       - attach_workspace:
           at: /
