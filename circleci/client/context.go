@@ -3,6 +3,7 @@ package client
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 
 	"github.com/CircleCI-Public/circleci-cli/api"
@@ -22,7 +23,12 @@ func (c *Client) GetContext(id string) (*api.Context, error) {
 
 	status, err := c.rest.DoRequest(req, ctx)
 	if err != nil {
-		if status == 404 {
+		if status == http.StatusNotFound {
+			return nil, ErrContextNotFound
+		}
+
+		// 404 is standard but CircleCI currently returns 403 for GETs to deleted contexts
+		if status == http.StatusForbidden {
 			return nil, ErrContextNotFound
 		}
 

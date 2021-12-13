@@ -1,6 +1,10 @@
 package client
 
-import "github.com/CircleCI-Public/circleci-cli/api"
+import (
+	"errors"
+
+	"github.com/CircleCI-Public/circleci-cli/api"
+)
 
 // CreateOrUpdateContextEnvironmentVariable creates a new context environment variable
 func (c *Client) CreateOrUpdateContextEnvironmentVariable(ctx, variable, value string) error {
@@ -16,6 +20,14 @@ func (c *Client) ListContextEnvironmentVariables(ctx string) (*[]api.Environment
 // HasContextEnvironmentVariable lists all environment variables for a given context and checks whether the specified variable is defined.
 // If either the context or the variable does not exist, it returns false.
 func (c *Client) HasContextEnvironmentVariable(ctx, variable string) (bool, error) {
+	if _, err := c.GetContext(ctx); err != nil {
+		if errors.Is(err, ErrContextNotFound) {
+			return false, nil
+		}
+
+		return false, err
+	}
+
 	envs, err := c.ListContextEnvironmentVariables(ctx)
 	if err != nil {
 		if isNotFound(err) {
