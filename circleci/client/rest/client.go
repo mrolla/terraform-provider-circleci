@@ -60,10 +60,25 @@ func (c *Client) NewRequest(method string, u *url.URL, payload interface{}) (req
 }
 
 func (c *Client) DoRequest(req *http.Request, resp interface{}) (statusCode int, err error) {
-	httpResp, err := c.client.Do(req)
+	var (
+		err      error
+        httpResp *http.Response
+        retries  int = 3
+    )
+	for retries > 0 {
+        httpResp, err = c.client.Do(req)
+
+        if err != nil {
+            retries -= 1
+        } else {
+            break
+        }
+    }
+
 	if err != nil {
 		return 0, err
 	}
+
 	defer httpResp.Body.Close()
 
 	if httpResp.StatusCode >= 300 {
