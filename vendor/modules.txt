@@ -13,7 +13,7 @@ cloud.google.com/go/storage
 # github.com/BurntSushi/toml v0.3.1
 ## explicit
 github.com/BurntSushi/toml
-# github.com/CircleCI-Public/circleci-cli v0.1.16122
+# github.com/CircleCI-Public/circleci-cli v0.1.16947
 ## explicit; go 1.17
 github.com/CircleCI-Public/circleci-cli/api
 github.com/CircleCI-Public/circleci-cli/api/graphql
