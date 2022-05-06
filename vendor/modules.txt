@@ -10,10 +10,7 @@ cloud.google.com/go/internal/version
 # cloud.google.com/go/storage v1.10.0
 ## explicit; go 1.11
 cloud.google.com/go/storage
-# github.com/BurntSushi/toml v0.3.1
-## explicit
-github.com/BurntSushi/toml
-# github.com/CircleCI-Public/circleci-cli v0.1.16122
+# github.com/CircleCI-Public/circleci-cli v0.1.17554
 ## explicit; go 1.17
 github.com/CircleCI-Public/circleci-cli/api
 github.com/CircleCI-Public/circleci-cli/api/graphql
@@ -111,49 +108,6 @@ github.com/davecgh/go-spew/spew
 # github.com/fatih/color v1.9.0
 ## explicit; go 1.13
 github.com/fatih/color
-# github.com/gobuffalo/buffalo-plugins v1.9.3
-## explicit
-github.com/gobuffalo/buffalo-plugins/plugins
-github.com/gobuffalo/buffalo-plugins/plugins/plugdeps
-# github.com/gobuffalo/envy v1.6.11
-## explicit
-github.com/gobuffalo/envy
-# github.com/gobuffalo/events v1.1.8
-## explicit
-github.com/gobuffalo/events
-# github.com/gobuffalo/flect v0.0.0-20181210151238-24a2b68e0316
-## explicit
-github.com/gobuffalo/flect
-github.com/gobuffalo/flect/name
-# github.com/gobuffalo/genny v0.0.0-20181211165820-e26c8466f14d
-## explicit
-github.com/gobuffalo/genny
-github.com/gobuffalo/genny/movinglater/gotools
-github.com/gobuffalo/genny/movinglater/gotools/goimports
-github.com/gobuffalo/genny/movinglater/gotools/gomods
-# github.com/gobuffalo/logger v0.0.0-20181127160119-5b956e21995c
-## explicit
-github.com/gobuffalo/logger
-# github.com/gobuffalo/mapi v1.0.1
-## explicit
-github.com/gobuffalo/mapi
-# github.com/gobuffalo/meta v0.0.0-20181127070345-0d7e59dd540b
-## explicit
-github.com/gobuffalo/meta
-# github.com/gobuffalo/packd v0.0.0-20181212173646-eca3b8fd6687
-## explicit
-github.com/gobuffalo/packd
-# github.com/gobuffalo/packr/v2 v2.0.0-rc.13
-## explicit
-github.com/gobuffalo/packr/v2
-github.com/gobuffalo/packr/v2/file
-github.com/gobuffalo/packr/v2/file/resolver
-github.com/gobuffalo/packr/v2/file/resolver/encoding/hex
-github.com/gobuffalo/packr/v2/jam/parser
-github.com/gobuffalo/packr/v2/plog
-# github.com/gobuffalo/syncx v0.0.0-20181120194010-558ac7de985f
-## explicit
-github.com/gobuffalo/syncx
 # github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e
 ## explicit
 github.com/golang/groupcache/lru
@@ -313,23 +267,14 @@ github.com/huandu/xstrings
 # github.com/imdario/mergo v0.3.12
 ## explicit; go 1.13
 github.com/imdario/mergo
-# github.com/inconshreveable/mousetrap v1.0.0
-## explicit
-github.com/inconshreveable/mousetrap
 # github.com/jmespath/go-jmespath v0.4.0
 ## explicit; go 1.14
 github.com/jmespath/go-jmespath
-# github.com/joho/godotenv v1.3.0
-## explicit
-github.com/joho/godotenv
 # github.com/jstemmer/go-junit-report v0.9.1
 ## explicit; go 1.2
 github.com/jstemmer/go-junit-report
 github.com/jstemmer/go-junit-report/formatter
 github.com/jstemmer/go-junit-report/parser
-# github.com/karrick/godirwalk v1.7.7
-## explicit
-github.com/karrick/godirwalk
 # github.com/klauspost/compress v1.11.2
 ## explicit; go 1.13
 github.com/klauspost/compress/fse
@@ -337,15 +282,6 @@ github.com/klauspost/compress/huff0
 github.com/klauspost/compress/snappy
 github.com/klauspost/compress/zstd
 github.com/klauspost/compress/zstd/internal/xxhash
-# github.com/konsorten/go-windows-terminal-sequences v1.0.1
-## explicit
-github.com/konsorten/go-windows-terminal-sequences
-# github.com/markbates/oncer v0.0.0-20181203154359-bf2de49a0be2
-## explicit
-github.com/markbates/oncer
-# github.com/markbates/safe v1.0.1
-## explicit
-github.com/markbates/safe
 # github.com/mattn/go-colorable v0.1.4
 ## explicit
 github.com/mattn/go-colorable
@@ -391,24 +327,10 @@ github.com/posener/complete
 github.com/posener/complete/cmd
 github.com/posener/complete/cmd/install
 github.com/posener/complete/match
-# github.com/rogpeppe/go-internal v1.3.0
-## explicit
-github.com/rogpeppe/go-internal/modfile
-github.com/rogpeppe/go-internal/module
-github.com/rogpeppe/go-internal/semver
-# github.com/sirupsen/logrus v1.4.1
-## explicit
-github.com/sirupsen/logrus
 # github.com/spf13/afero v1.2.2
 ## explicit
 github.com/spf13/afero
 github.com/spf13/afero/mem
-# github.com/spf13/cobra v0.0.5
-## explicit; go 1.12
-github.com/spf13/cobra
-# github.com/spf13/pflag v1.0.5
-## explicit; go 1.12
-github.com/spf13/pflag
 # github.com/stretchr/testify v1.7.1
 ## explicit; go 1.13
 github.com/stretchr/testify/assert
@@ -479,7 +401,6 @@ golang.org/x/crypto/poly1305
 golang.org/x/crypto/scrypt
 golang.org/x/crypto/ssh
 golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
-golang.org/x/crypto/ssh/terminal
 # golang.org/x/lint v0.0.0-20200302205851-738671d3881b
 ## explicit; go 1.11
 golang.org/x/lint
@@ -505,16 +426,11 @@ golang.org/x/oauth2/google
 golang.org/x/oauth2/internal
 golang.org/x/oauth2/jws
 golang.org/x/oauth2/jwt
-# golang.org/x/sys v0.0.0-20210324051608-47abb6519492
-## explicit; go 1.12
+# golang.org/x/sys v0.0.0-20220503163025-988cb79eb6c6
+## explicit; go 1.17
 golang.org/x/sys/cpu
 golang.org/x/sys/internal/unsafeheader
-golang.org/x/sys/plan9
 golang.org/x/sys/unix
-golang.org/x/sys/windows
-# golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1
-## explicit; go 1.11
-golang.org/x/term
 # golang.org/x/text v0.3.5
 ## explicit; go 1.11
 golang.org/x/text/secure/bidirule
@@ -527,7 +443,6 @@ golang.org/x/tools/cmd/goimports
 golang.org/x/tools/go/ast/astutil
 golang.org/x/tools/go/gcexportdata
 golang.org/x/tools/go/internal/gcimporter
-golang.org/x/tools/imports
 golang.org/x/tools/internal/event
 golang.org/x/tools/internal/event/core
 golang.org/x/tools/internal/event/keys

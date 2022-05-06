@@ -3,7 +3,7 @@ module github.com/mrolla/terraform-provider-circleci
 go 1.17
 
 require (
-	github.com/CircleCI-Public/circleci-cli v0.1.16122
+	github.com/CircleCI-Public/circleci-cli v0.1.17554
 	github.com/google/uuid v1.3.0
 	github.com/hashicorp/terraform-plugin-sdk v1.17.2
 	github.com/stretchr/testify v1.7.1
@@ -12,7 +12,6 @@ require (
 require (
 	cloud.google.com/go v0.65.0 // indirect
 	cloud.google.com/go/storage v1.10.0 // indirect
-	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/Masterminds/goutils v1.1.0 // indirect
 	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/Masterminds/sprig v2.22.0+incompatible // indirect
@@ -26,17 +25,6 @@ require (
 	github.com/bgentry/speakeasy v0.1.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fatih/color v1.9.0 // indirect
-	github.com/gobuffalo/buffalo-plugins v1.9.3 // indirect
-	github.com/gobuffalo/envy v1.6.11 // indirect
-	github.com/gobuffalo/events v1.1.8 // indirect
-	github.com/gobuffalo/flect v0.0.0-20181210151238-24a2b68e0316 // indirect
-	github.com/gobuffalo/genny v0.0.0-20181211165820-e26c8466f14d // indirect
-	github.com/gobuffalo/logger v0.0.0-20181127160119-5b956e21995c // indirect
-	github.com/gobuffalo/mapi v1.0.1 // indirect
-	github.com/gobuffalo/meta v0.0.0-20181127070345-0d7e59dd540b // indirect
-	github.com/gobuffalo/packd v0.0.0-20181212173646-eca3b8fd6687 // indirect
-	github.com/gobuffalo/packr/v2 v2.0.0-rc.13 // indirect
-	github.com/gobuffalo/syncx v0.0.0-20181120194010-558ac7de985f // indirect
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
 	github.com/golang/protobuf v1.4.2 // indirect
 	github.com/google/go-cmp v0.5.5 // indirect
@@ -62,15 +50,9 @@ require (
 	github.com/hashicorp/yamux v0.0.0-20181012175058-2f1d1f20f75d // indirect
 	github.com/huandu/xstrings v1.3.2 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
-	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
-	github.com/joho/godotenv v1.3.0 // indirect
 	github.com/jstemmer/go-junit-report v0.9.1 // indirect
-	github.com/karrick/godirwalk v1.7.7 // indirect
 	github.com/klauspost/compress v1.11.2 // indirect
-	github.com/konsorten/go-windows-terminal-sequences v1.0.1 // indirect
-	github.com/markbates/oncer v0.0.0-20181203154359-bf2de49a0be2 // indirect
-	github.com/markbates/safe v1.0.1 // indirect
 	github.com/mattn/go-colorable v0.1.4 // indirect
 	github.com/mattn/go-isatty v0.0.12 // indirect
 	github.com/mitchellh/cli v1.1.2 // indirect
@@ -85,11 +67,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/posener/complete v1.2.1 // indirect
-	github.com/rogpeppe/go-internal v1.3.0 // indirect
-	github.com/sirupsen/logrus v1.4.1 // indirect
 	github.com/spf13/afero v1.2.2 // indirect
-	github.com/spf13/cobra v0.0.5 // indirect
-	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/ulikunitz/xz v0.5.9 // indirect
 	github.com/vmihailenco/msgpack/v4 v4.3.12 // indirect
 	github.com/vmihailenco/tagparser v0.1.1 // indirect
@@ -101,8 +79,7 @@ require (
 	golang.org/x/mod v0.3.0 // indirect
 	golang.org/x/net v0.0.0-20210326060303-6b1517762897 // indirect
 	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43 // indirect
-	golang.org/x/sys v0.0.0-20210324051608-47abb6519492 // indirect
-	golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1 // indirect
+	golang.org/x/sys v0.0.0-20220503163025-988cb79eb6c6 // indirect
 	golang.org/x/text v0.3.5 // indirect
 	golang.org/x/tools v0.0.0-20201028111035-eafbe7b904eb // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
