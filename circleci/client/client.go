@@ -16,6 +16,7 @@ import (
 // It uses upstream client functionality where possible and defines its own methods as needed
 type Client struct {
 	contexts     *api.ContextRestClient
+	schedules    *api.ScheduleRestClient
 	rest         *rest.Client
 	vcs          string
 	organization string
@@ -39,19 +40,27 @@ func New(config Config) (*Client, error) {
 
 	rootURL := fmt.Sprintf("%s://%s", u.Scheme, u.Host)
 
-	contexts, err := api.NewContextRestClient(settings.Config{
+	cfg := settings.Config{
 		Host:         rootURL,
 		RestEndpoint: u.Path,
 		Token:        config.Token,
 		HTTPClient:   http.DefaultClient,
-	})
+	}
+
+	contexts, err := api.NewContextRestClient(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	schedules, err := api.NewScheduleRestClient(cfg)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Client{
-		rest:     rest.New(rootURL, u.Path, config.Token),
-		contexts: contexts,
+		rest:      rest.New(rootURL, u.Path, config.Token),
+		contexts:  contexts,
+		schedules: schedules,
 
 		vcs:          config.VCS,
 		organization: config.Organization,
