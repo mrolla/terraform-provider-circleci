@@ -6,7 +6,7 @@ require (
 	github.com/CircleCI-Public/circleci-cli v0.1.16122
 	github.com/google/uuid v1.3.0
 	github.com/hashicorp/terraform-plugin-sdk v1.17.2
-	github.com/stretchr/testify v1.7.1
+	github.com/stretchr/testify v1.7.4
 )
 
 require (
@@ -111,5 +111,5 @@ require (
 	google.golang.org/genproto v0.0.0-20200904004341-0bd0a958aa1d // indirect
 	google.golang.org/grpc v1.32.0 // indirect
 	google.golang.org/protobuf v1.25.0 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20200605160147-a5ece683394c // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
