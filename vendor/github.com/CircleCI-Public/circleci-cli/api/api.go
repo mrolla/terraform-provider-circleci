@@ -513,52 +513,118 @@ func WhoamiQuery(cl *graphql.Client) (*WhoamiResponse, error) {
 	return &response, nil
 }
 
-// ConfigQuery calls the GQL API to validate and process config
-func ConfigQuery(cl *graphql.Client, configPath string, orgSlug string, pipelineValues pipeline.Values) (*ConfigResponse, error) {
+// ConfigQueryLegacy calls the GQL API to validate and process config with the legacy orgSlug
+func ConfigQueryLegacy(cl *graphql.Client, configPath string, orgSlug string, params pipeline.Parameters, values pipeline.Values) (*ConfigResponse, error) {
 	var response BuildConfigResponse
 	var query string
-
 	config, err := loadYaml(configPath)
 	if err != nil {
 		return nil, err
 	}
-
+	// GraphQL isn't forwards-compatible, so we are unusually selective here about
+	// passing only non-empty fields on to the API, to minimize user impact if the
+	// backend is out of date.
+	var fieldAddendums string
 	if orgSlug != "" {
-		query = `query ValidateConfig ($config: String!, $pipelineValues: [StringKeyVal!], $orgSlug: String) {
-					buildConfig(configYaml: $config, pipelineValues: $pipelineValues, orgSlug: $orgSlug) {
-						valid,
-						errors { message },
-						sourceYaml,
-						outputYaml
-					}
-				}`
-	} else {
-		query = `query ValidateConfig ($config: String!, $pipelineValues: [StringKeyVal!]) {
-					buildConfig(configYaml: $config, pipelineValues: $pipelineValues) {
-						valid,
-						errors { message },
-						sourceYaml,
-						outputYaml
-					}
-				}`
+		fieldAddendums += ", orgSlug: $orgSlug"
 	}
+	if len(params) > 0 {
+		fieldAddendums += ", pipelineParametersJson: $pipelineParametersJson"
+	}
+	query = fmt.Sprintf(
+		`query ValidateConfig ($config: String!, $pipelineParametersJson: String, $pipelineValues: [StringKeyVal!], $orgSlug: String) {
+			buildConfig(configYaml: $config, pipelineValues: $pipelineValues%s) {
+				valid,
+				errors { message },
+				sourceYaml,
+				outputYaml
+			}
+		}`,
+		fieldAddendums)
 
 	request := graphql.NewRequest(query)
 	request.Var("config", config)
-	if pipelineValues != nil {
-		request.Var("pipelineValues", pipeline.PrepareForGraphQL(pipelineValues))
+
+	if values != nil {
+		request.Var("pipelineValues", pipeline.PrepareForGraphQL(values))
 	}
+	if params != nil {
+		pipelineParameters, err := json.Marshal(params)
+		if err != nil {
+			return nil, fmt.Errorf("unable to serialize pipeline values: %s", err.Error())
+		}
+		request.Var("pipelineParametersJson", string(pipelineParameters))
+	}
+
 	if orgSlug != "" {
 		request.Var("orgSlug", orgSlug)
+	}
+
+	request.SetToken(cl.Token)
+
+	err = cl.Run(request, &response)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to validate config")
+	}
+	if len(response.BuildConfig.ConfigResponse.Errors) > 0 {
+		return nil, &response.BuildConfig.ConfigResponse.Errors
+	}
+
+	return &response.BuildConfig.ConfigResponse, nil
+}
+
+// ConfigQuery calls the GQL API to validate and process config with the org id
+func ConfigQuery(cl *graphql.Client, configPath string, orgId string, params pipeline.Parameters, values pipeline.Values) (*ConfigResponse, error) {
+	var response BuildConfigResponse
+	var query string
+	config, err := loadYaml(configPath)
+	if err != nil {
+		return nil, err
+	}
+	// GraphQL isn't forwards-compatible, so we are unusually selective here about
+	// passing only non-empty fields on to the API, to minimize user impact if the
+	// backend is out of date.
+	var fieldAddendums string
+	if orgId != "" {
+		fieldAddendums += ", orgId: $orgId"
+	}
+	if len(params) > 0 {
+		fieldAddendums += ", pipelineParametersJson: $pipelineParametersJson"
+	}
+	query = fmt.Sprintf(
+		`query ValidateConfig ($config: String!, $pipelineParametersJson: String, $pipelineValues: [StringKeyVal!], $orgId: UUID!) {
+			buildConfig(configYaml: $config, pipelineValues: $pipelineValues%s) {
+				valid,
+				errors { message },
+				sourceYaml,
+				outputYaml
+			}
+		}`,
+		fieldAddendums)
+
+	request := graphql.NewRequest(query)
+	request.Var("config", config)
+
+	if values != nil {
+		request.Var("pipelineValues", pipeline.PrepareForGraphQL(values))
+	}
+	if params != nil {
+		pipelineParameters, err := json.Marshal(params)
+		if err != nil {
+			return nil, fmt.Errorf("unable to serialize pipeline values: %s", err.Error())
+		}
+		request.Var("pipelineParametersJson", string(pipelineParameters))
+	}
+
+	if orgId != "" {
+		request.Var("orgId", orgId)
 	}
 	request.SetToken(cl.Token)
 
 	err = cl.Run(request, &response)
-
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to validate config")
 	}
-
 	if len(response.BuildConfig.ConfigResponse.Errors) > 0 {
 		return nil, &response.BuildConfig.ConfigResponse.Errors
 	}
@@ -794,7 +860,7 @@ func CreateImportedNamespace(cl *graphql.Client, name string) (*ImportNamespaceR
 	return &response, nil
 }
 
-func createNamespaceWithOwnerID(cl *graphql.Client, name string, ownerID string) (*CreateNamespaceResponse, error) {
+func CreateNamespaceWithOwnerID(cl *graphql.Client, name string, ownerID string) (*CreateNamespaceResponse, error) {
 	var response CreateNamespaceResponse
 
 	query := `
@@ -951,7 +1017,7 @@ func CreateNamespace(cl *graphql.Client, name string, organizationName string, o
 		return nil, errors.Wrap(organizationNotFound(organizationName, organizationVcs), getOrgError.Error())
 	}
 
-	createNSResponse, createNSError := createNamespaceWithOwnerID(cl, name, getOrgResponse.Organization.ID)
+	createNSResponse, createNSError := CreateNamespaceWithOwnerID(cl, name, getOrgResponse.Organization.ID)
 
 	if createNSError != nil {
 		return nil, createNSError
@@ -1356,6 +1422,7 @@ func OrbSource(cl *graphql.Client, orbRef string) (string, error) {
 		      }`
 
 	request := graphql.NewRequest(query)
+	request.SetToken(cl.Token)
 	request.Var("orbVersionRef", ref)
 
 	err := cl.Run(request, &response)
@@ -1424,6 +1491,7 @@ func OrbInfo(cl *graphql.Client, orbRef string) (*OrbVersion, error) {
 		      }`
 
 	request := graphql.NewRequest(query)
+	request.SetToken(cl.Token)
 	request.Var("orbVersionRef", ref)
 
 	err := cl.Run(request, &response)
@@ -1492,6 +1560,7 @@ query ListOrbs ($after: String!, $certifiedOnly: Boolean!) {
 
 	for {
 		request := graphql.NewRequest(query)
+		request.SetToken(cl.Token)
 		request.Var("after", currentCursor)
 		request.Var("certifiedOnly", !uncertified)
 
@@ -1864,11 +1933,15 @@ func ListOrbCategories(cl *graphql.Client) (*OrbCategoriesForListing, error) {
 
 // FollowProject initiates an API request to follow a specific project on
 // CircleCI. Project slugs are case-sensitive.
+
+var errorMessage = `Unable to follow project`
+
 func FollowProject(config settings.Config, vcs string, owner string, projectName string) (FollowedProject, error) {
+
 	requestPath := fmt.Sprintf("%s/api/v1.1/project/%s/%s/%s/follow", config.Host, vcs, owner, projectName)
 	r, err := http.NewRequest(http.MethodPost, requestPath, nil)
 	if err != nil {
-		return FollowedProject{}, err
+		return FollowedProject{}, errors.Wrap(err, errorMessage)
 	}
 	r.Header.Set("Content-Type", "application/json; charset=utf-8")
 	r.Header.Set("Accept", "application/json; charset=utf-8")
@@ -1878,11 +1951,14 @@ func FollowProject(config settings.Config, vcs string, owner string, projectName
 	if err != nil {
 		return FollowedProject{}, err
 	}
+	if response.StatusCode >= 400 {
+		return FollowedProject{}, errors.New("Could not follow project")
+	}
 
 	var fr FollowedProject
 	err = json.NewDecoder(response.Body).Decode(&fr)
 	if err != nil {
-		return FollowedProject{}, err
+		return FollowedProject{}, errors.Wrap(err, errorMessage)
 	}
 
 	return fr, nil
