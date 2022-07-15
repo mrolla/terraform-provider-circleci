@@ -27,7 +27,7 @@ type Config struct {
 	TLSCert         string            `yaml:"tls_cert"`
 	TLSInsecure     bool              `yaml:"tls_insecure"`
 	HTTPClient      *http.Client      `yaml:"-"`
-	Data            *data.YML         `yaml:"-"`
+	Data            *data.DataBag     `yaml:"-"`
 	Debug           bool              `yaml:"-"`
 	Address         string            `yaml:"-"`
 	FileUsed        string            `yaml:"-"`
@@ -223,7 +223,7 @@ func (cfg *Config) WithHTTPClient() error {
 	}
 
 	cfg.HTTPClient = &http.Client{
-		Timeout: 30 * time.Second,
+		Timeout: 60 * time.Second,
 		Transport: &http.Transport{
 			ExpectContinueTimeout: 1 * time.Second,
 			IdleConnTimeout:       90 * time.Second,
