@@ -66,6 +66,52 @@ func TestAccCircleCIContextEnvironmentVariable_update(t *testing.T) {
 	})
 }
 
+func TestAccCircleCIContextEnvironmentVariable_deleted_context(t *testing.T) {
+	variable := &api.EnvironmentVariable{}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccOrgProviders,
+		CheckDestroy: testAccCheckCircleCIContextEnvironmentVariableDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config:             testAccCircleCIContextEnvironmentVariable_basic,
+				ExpectNonEmptyPlan: true,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckCircleCIContextEnvironmentVariableExists("circleci_context_environment_variable.foo", variable),
+					testAccCheckCircleCIContextEnvironmentVariableAttributes_basic(variable),
+					func(s *terraform.State) error {
+						c := testAccOrgProvider.Meta().(*client.Client)
+
+						addr := "circleci_context_environment_variable.foo"
+
+						resource, ok := s.RootModule().Resources[addr]
+						if !ok {
+							return fmt.Errorf("not found: %s", addr)
+						}
+
+						if err := c.DeleteContext(resource.Primary.Attributes["context_id"]); err != nil {
+							return fmt.Errorf("error deleting context: %w", err)
+						}
+
+						return nil
+					},
+				),
+			},
+			{
+				Config: testAccCircleCIContextEnvironmentVariable_basic,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckCircleCIContextEnvironmentVariableExists("circleci_context_environment_variable.foo", variable),
+					testAccCheckCircleCIContextEnvironmentVariableAttributes_basic(variable),
+					resource.TestCheckResourceAttr("circleci_context_environment_variable.foo", "variable", "VAR"),
+					resource.TestCheckResourceAttr("circleci_context_environment_variable.foo", "value", hashString("secret-value")),
+					resource.TestCheckResourceAttrSet("circleci_context_environment_variable.foo", "context_id"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccCircleCIContextEnvironmentVariable_import(t *testing.T) {
 	context := &api.Context{}
 
