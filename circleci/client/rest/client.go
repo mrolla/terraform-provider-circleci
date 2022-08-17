@@ -28,7 +28,7 @@ func New(host, endpoint, circleToken string) *Client {
 		baseURL:     u.ResolveReference(&url.URL{Path: endpoint}),
 		circleToken: circleToken,
 		client: &http.Client{
-			Timeout: 10 * time.Second,
+			Timeout: 30 * time.Second,
 		},
 	}
 }
