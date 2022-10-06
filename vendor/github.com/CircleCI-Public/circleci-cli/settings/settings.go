@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -27,13 +28,14 @@ type Config struct {
 	TLSCert         string            `yaml:"tls_cert"`
 	TLSInsecure     bool              `yaml:"tls_insecure"`
 	HTTPClient      *http.Client      `yaml:"-"`
-	Data            *data.YML         `yaml:"-"`
+	Data            *data.DataBag     `yaml:"-"`
 	Debug           bool              `yaml:"-"`
 	Address         string            `yaml:"-"`
 	FileUsed        string            `yaml:"-"`
 	GitHubAPI       string            `yaml:"-"`
 	SkipUpdateCheck bool              `yaml:"-"`
 	OrbPublishing   OrbPublishingInfo `yaml:"orb_publishing"`
+	ConfigAPIHost   string            `yaml:"-"`
 }
 
 type OrbPublishingInfo struct {
@@ -222,15 +224,17 @@ func (cfg *Config) WithHTTPClient() error {
 		tlsConfig.RootCAs = pool
 	}
 
+	// clone default http transport to retain default transport config values
+	customTransport := http.DefaultTransport.(*http.Transport).Clone()
+	customTransport.ExpectContinueTimeout = time.Second
+	customTransport.IdleConnTimeout = 90 * time.Second
+	customTransport.MaxIdleConns = 10
+	customTransport.TLSHandshakeTimeout = 10 * time.Second
+	customTransport.TLSClientConfig = tlsConfig
+
 	cfg.HTTPClient = &http.Client{
-		Timeout: 30 * time.Second,
-		Transport: &http.Transport{
-			ExpectContinueTimeout: 1 * time.Second,
-			IdleConnTimeout:       90 * time.Second,
-			MaxIdleConns:          10,
-			TLSHandshakeTimeout:   10 * time.Second,
-			TLSClientConfig:       tlsConfig,
-		},
+		Timeout:   60 * time.Second,
+		Transport: customTransport,
 	}
 
 	return nil
@@ -272,4 +276,27 @@ func isWorldWritable(info os.FileInfo) bool {
 	// Example: '-rwxrwx-w-' -> '-w-'
 	sysPerms := mode[len(mode)-3:]
 	return strings.Contains(sysPerms, "w")
+}
+
+// ServerURL retrieves and formats a ServerURL from our restEndpoint and host.
+func (cfg *Config) ServerURL() (*url.URL, error) {
+	var URL string
+
+	if !strings.HasSuffix(cfg.RestEndpoint, "/") {
+		URL = fmt.Sprintf("%s/", cfg.RestEndpoint)
+	} else {
+		URL = cfg.RestEndpoint
+	}
+
+	serverURL, err := url.Parse(cfg.Host)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err = serverURL.Parse(URL)
+	if err != nil {
+		return nil, err
+	}
+
+	return serverURL, nil
 }
