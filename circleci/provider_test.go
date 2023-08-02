@@ -52,4 +52,8 @@ func testAccPreCheck(t *testing.T) {
 	if v := os.Getenv("TEST_CIRCLECI_ORGANIZATION"); v == "" {
 		t.Fatal("TEST_CIRCLECI_ORGANIZATION must be set for acceptance tests")
 	}
+
+	if v := os.Getenv("CIRCLECI_PROJECT"); v == "" {
+		t.Fatal("CIRCLECI_PROJECT must be set for acceptance tests")
+	}
 }
