@@ -1,4 +1,13 @@
-version: 2
+version: 2.1
+
+orbs:
+  snyk: snyk/snyk@2.2.0
+
+executors:
+  go:
+    docker:
+      - image: cimg/go:1.23
+
 jobs:
   build:
     docker:
@@ -54,14 +63,33 @@ jobs:
           command: |
             ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete -draft ${CIRCLE_TAG} .
 
+  vulnerability-scan:
+    executor: go
+    steps:
+      - checkout
+      - run:
+          name: Setup Scanning
+          command: |
+              git config --global url."https://$GITHUB_USER:$GITHUB_TOKEN@github.com/circleci/".insteadOf "https://github.com/circleci/"
+      - run:
+          name: Launching Snyk Orb Scanning
+          command: echo "Running snyk/scan and displaying the results"
+      - snyk/scan:
+          organization: "circleci-public"
+          fail-on-issues: true
+          severity-threshold: high
+          monitor-on-build: false
+          additional-arguments: "--all-projects -d"
+
 workflows:
-  version: 2
   build:
     jobs:
       - build:
           filters:
             tags:
               only: /^v\d+\.\d+\.\d+$/
+      - vulnerability-scan:
+          context: org-global-employees
       - release:
           requires:
             - build
