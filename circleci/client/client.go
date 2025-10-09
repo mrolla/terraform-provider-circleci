@@ -1,10 +1,14 @@
 package client
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"io"
+	"math"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/CircleCI-Public/circleci-cli/api"
 	"github.com/CircleCI-Public/circleci-cli/settings"
@@ -30,6 +34,74 @@ type Config struct {
 	Organization string
 }
 
+// retryTransport wraps an http.RoundTripper and adds retry logic for rate limiting
+type retryTransport struct {
+	transport http.RoundTripper
+}
+
+func (t *retryTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	const (
+		maxRetries     = 5
+		initialBackoff = 1 * time.Second
+		maxBackoff     = 32 * time.Second
+	)
+
+	var resp *http.Response
+	var err error
+	var bodyBytes []byte
+
+	// Save the request body if it exists
+	if req.Body != nil {
+		bodyBytes, err = io.ReadAll(req.Body)
+		req.Body.Close()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	for attempt := 0; attempt <= maxRetries; attempt++ {
+		// Restore the request body for each attempt
+		if bodyBytes != nil {
+			req.Body = io.NopCloser(bytes.NewReader(bodyBytes))
+		}
+
+		resp, err = t.transport.RoundTrip(req)
+		if err != nil {
+			return nil, err
+		}
+
+		// Check for rate limiting (429)
+		if resp.StatusCode == http.StatusTooManyRequests && attempt < maxRetries {
+			// Close the response body before retrying
+			resp.Body.Close()
+
+			// Calculate exponential backoff
+			backoff := time.Duration(math.Pow(2, float64(attempt))) * initialBackoff
+			if backoff > maxBackoff {
+				backoff = maxBackoff
+			}
+
+			time.Sleep(backoff)
+			continue
+		}
+
+		// Not a rate limit error or max retries reached
+		break
+	}
+
+	return resp, err
+}
+
+// newHTTPClientWithRetry creates an HTTP client with retry logic for rate limiting
+func newHTTPClientWithRetry() *http.Client {
+	return &http.Client{
+		Timeout: 10 * time.Second,
+		Transport: &retryTransport{
+			transport: http.DefaultTransport,
+		},
+	}
+}
+
 // New initializes a client object for the provider
 func New(config Config) (*Client, error) {
 	u, err := url.Parse(config.URL)
@@ -43,7 +115,7 @@ func New(config Config) (*Client, error) {
 		Host:         rootURL,
 		RestEndpoint: u.Path,
 		Token:        config.Token,
-		HTTPClient:   http.DefaultClient,
+		HTTPClient:   newHTTPClientWithRetry(),
 	})
 	if err != nil {
 		return nil, err
